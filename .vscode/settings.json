@@ -1,0 +1,22 @@
+{
+  "bemHelper.ignorePatterns": [
+    "hover:*",
+    "focus:*", 
+    "disabled:*",
+    "max-h-*",
+    "max-w-*",
+    "max-h-\\[90vh\\]",
+    "hover:bg-gray-100",
+    "focus:outline-none",
+    "focus:ring-2",
+    "focus:ring-blue-500",
+    "focus:border-transparent",
+    "hover:bg-blue-700",
+    "disabled:bg-gray-400"
+  ],
+  "bemHelper.ignoreFiles": [
+    "**/node_modules/**",
+    "**/dist/**",
+    "**/.next/**"
+  ]
+}

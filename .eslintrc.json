@@ -1,0 +1,14 @@
+{
+  "extends": "next/core-web-vitals",
+  "rules": {
+    "bem-helper/case": "off"
+  },
+  "overrides": [
+    {
+      "files": ["**/*.tsx", "**/*.ts"],
+      "rules": {
+        "bem-helper/case": "off"
+      }
+    }
+  ]
+}

@@ -1,0 +1,63 @@
+// prisma/schema.prisma — схема БД (SQLite/dev, Postgres/prod)
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Partner {
+  id         String         @id @default(cuid())
+  name       String
+  phone      String
+  brandColor String?
+  logoUrl    String?
+  isActive   Boolean        @default(true)
+  createdAt  DateTime       @default(now())
+  pricing    PricingRule[]
+  leads      Lead[]
+}
+
+model PricingRule {
+  id         String   @id @default(cuid())
+  partnerId  String
+  partner    Partner  @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  pestType   String
+  objectType String
+  variant    String   // "1" | "2" | "3" | "4" | "default"
+  basePrice  Int
+}
+
+model Lead {
+  id                String   @id @default(cuid())
+  partnerId         String
+  partner           Partner  @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  pestType          String
+  objectType        String
+  rooms             Int?
+  infestation       String
+  previousTreatment Boolean
+  phone             String
+  address           String
+  name              String
+  expectedDate      DateTime
+  clientComment     String?
+  approxPrice       Int
+  status            String   @default("new")
+  createdAt         DateTime @default(now())
+  source            String
+  reminders         Reminder[]
+}
+
+model Reminder {
+  id          String   @id @default(cuid())
+  leadId      String
+  lead        Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  scheduledAt DateTime
+  status      String
+  channel     String
+}
+
+
