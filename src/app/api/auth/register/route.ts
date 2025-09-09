@@ -4,6 +4,8 @@ import { z } from 'zod';
 import { apiClient, logApiCall, logApiError } from '@/lib/apiUtils';
 import { API_CONFIG } from '@/lib/config';
 
+export const dynamic = 'force-dynamic';
+
 const registerSchema = z.object({
   name: z.string().min(1, 'Имя обязательно'),
   surname: z.string().min(1, 'Фамилия обязательна'),

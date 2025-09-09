@@ -3,6 +3,8 @@ import { NextResponse } from 'next/server';
 import { apiClient, logApiCall, logApiError } from '@/lib/apiUtils';
 import { API_CONFIG } from '@/lib/config';
 
+export const dynamic = 'force-dynamic';
+
 interface LoginRequest {
   email: string;
   password: string;

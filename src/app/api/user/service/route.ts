@@ -3,6 +3,8 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { API_BASE_URL } from '@/lib/config';
 
+export const dynamic = 'force-dynamic';
+
 const serviceUpdateSchema = z.object({
   oneRoomLiquid: z.number().min(0),
   oneRoomGel: z.number().min(0),

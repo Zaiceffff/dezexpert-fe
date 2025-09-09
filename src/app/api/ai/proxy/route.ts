@@ -4,6 +4,8 @@ import { NextResponse } from 'next/server';
 import { withGuards } from '@/lib/requestGuards';
 import { callAiProxyAndValidate } from '@/lib/aiProxy';
 
+export const dynamic = 'force-dynamic';
+
 export const POST = withGuards(async (req: NextRequest) => {
   const body = await req.json().catch(() => ({}));
   const result = await callAiProxyAndValidate(body);
