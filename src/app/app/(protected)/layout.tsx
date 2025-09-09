@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { apiClient } from '@/lib/api';
+import { AvitoProvider } from '@/contexts/AvitoContext';
 
 interface User {
   id: string;
@@ -46,6 +47,9 @@ export default function ProtectedLayout({
         };
         setUser(user);
       } catch (error) {
+        console.error('Ошибка авторизации:', error);
+        // Очищаем токен при ошибке
+        apiClient.clearToken();
         // Перенаправляем на страницу входа при ошибке авторизации
         router.push('/app/auth');
       } finally {
@@ -80,11 +84,13 @@ export default function ProtectedLayout({
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-2 pt-0 pb-2">
-        {children}
-      </main>
-    </div>
+    <AvitoProvider>
+      <div className="min-h-screen bg-gray-50">
+        {/* Main Content */}
+        <main className="max-w-7xl mx-auto px-2 pt-0 pb-2">
+          {children}
+        </main>
+      </div>
+    </AvitoProvider>
   );
 }

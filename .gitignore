@@ -81,3 +81,6 @@ jspm_packages/
 prisma/dev.db
 prisma/dev.db-journal
 public/DezexpertPro.mov
+
+# Avito Backend (отдельный проект)
+avitobotBE-main/

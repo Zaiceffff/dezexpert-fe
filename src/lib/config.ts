@@ -59,6 +59,14 @@ export const API_CONFIG = {
     AI: {
       PROXY: '/ai/proxy',
     },
+    AVITO: {
+      OAUTH_URL: '/avito/oauth/url',
+      OAUTH_CALLBACK: '/avito/oauth/callback',
+      LISTINGS: '/avito/listings',
+      LISTINGS_AI_ACTIVE: '/avito/listings/ai-active',
+      SYNC_LISTINGS: '/avito/sync/listings',
+      AI_TOGGLE: '/avito/listings/:id/ai-toggle',
+    },
   },
 } as const;
 

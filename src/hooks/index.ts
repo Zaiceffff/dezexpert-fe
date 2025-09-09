@@ -10,4 +10,12 @@ export { useOrders, useOrdersState } from './useOrders';
 export { useUsersState } from './useUsers';
 export { useSeed } from './useSeed';
 export { useWebhooks } from './useWebhooks';
-export { useApi } from './useApi';
+export * from './useApi';
+
+// Avito хуки
+export { useAvitoListings } from './useAvitoListings';
+export { useAvitoStats } from './useAvitoStats';
+export { useAvitoOAuth } from './useAvitoOAuth';
+
+// Авторизация и персистентность
+export { useAuthPersistence } from './useAuthPersistence';

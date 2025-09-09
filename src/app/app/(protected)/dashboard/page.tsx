@@ -19,6 +19,9 @@ import { AddRequestModal } from '@/components/AddRequestModal';
 import { OrderDetails } from '@/components/OrderDetails';
 import { Calendar } from '@/components/Calendar';
 import { Analytics } from '@/components/Analytics';
+import { AvitoConnection } from '@/components/AvitoConnection';
+import { AvitoListings } from '@/components/AvitoListings';
+import { TokenInfo } from '@/components/TokenInfo';
 // import DashboardPricingManager from '@/components/DashboardPricingManager';
 import PriceEditModal from '@/components/PriceEditModal';
 import type { Order, CreateOrderRequest, UserProfile, OrdersResponse } from '@/lib/types';
@@ -80,6 +83,7 @@ export default function DashboardPage() {
   const [showPriceModal, setShowPriceModal] = useState(false);
   const [userPrices, setUserPrices] = useState(getDefaultPrices());
   const [hasNoTariff, setHasNoTariff] = useState(false);
+  const [avitoConnected, setAvitoConnected] = useState(false);
 
   // Используем данные из хука
   const orders = ordersFromHook;
@@ -701,6 +705,15 @@ export default function DashboardPage() {
     setShowDetailsModal(true);
   };
 
+  const handleAvitoConnected = () => {
+    setAvitoConnected(true);
+  };
+
+  const handleAvitoListingUpdate = (listing: any) => {
+    // Обновляем статистику или выполняем другие действия
+    console.log('Avito listing updated:', listing);
+  };
+
   const getStatusDot = (status: string) => {
     if (status === 'New') {
       return (
@@ -758,30 +771,35 @@ export default function DashboardPage() {
             <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Заявки на дезинфекцию</h1>
             {userProfile ? (
               <div className="text-sm text-gray-600 mt-1">
-                                    {currentTariffInfo ? (
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                  <div>
+                    {currentTariffInfo ? (
                       <div>
                         <p className="font-medium text-gray-700">
                           {currentTariffInfo.name} - {currentTariffInfo.price === '0' || currentTariffInfo.price === '0.00' ? 'Бесплатно' : currentTariffInfo.price === 'ОБСУДИМ' ? 'По запросу' : `${currentTariffInfo.price} ₽`}
                         </p>
-                    <p className="text-xs text-gray-500 mt-1">
-                      {stats.isUnlimited ? 'Безлимитный доступ' : (stats.hasTrialTariff ? 'Пробный доступ - максимум 5 заявок' : 'Безлимитный доступ')}
-                    </p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          {stats.isUnlimited ? 'Безлимитный доступ' : (stats.hasTrialTariff ? 'Пробный доступ - максимум 5 заявок' : 'Безлимитный доступ')}
+                        </p>
+                      </div>
+                    ) : (
+                      <p>
+                        {hasNoTariff 
+                          ? 'Тариф не выбран - заявки заблокированы' 
+                          : stats.isUnlimited 
+                            ? 'Безлимитный доступ' 
+                            : (stats.hasTrialTariff ? 'Пробный доступ - максимум 5 заявок' : 'Безлимитный доступ')
+                        }
+                      </p>
+                    )}
+                    {!stats.isUnlimited && (stats.hasTrialTariff || userProfile.tariff?.price === '0') && stats.totalLeads > 5 && (
+                      <span className="text-orange-600 ml-2">
+                        (показано 5 из {stats.totalLeads})
+                      </span>
+                    )}
                   </div>
-                ) : (
-                  <p>
-                    {hasNoTariff 
-                      ? 'Тариф не выбран - заявки заблокированы' 
-                      : stats.isUnlimited 
-                        ? 'Безлимитный доступ' 
-                        : (stats.hasTrialTariff ? 'Пробный доступ - максимум 5 заявок' : 'Безлимитный доступ')
-                    }
-                  </p>
-                )}
-                {!stats.isUnlimited && (stats.hasTrialTariff || userProfile.tariff?.price === '0') && stats.totalLeads > 5 && (
-                  <span className="text-orange-600 ml-2">
-                    (показано 5 из {stats.totalLeads})
-                  </span>
-                )}
+                  <TokenInfo className="self-start" />
+                </div>
               </div>
             ) : (
               <p className="text-sm text-gray-500 mt-1">Загрузка профиля...</p>
@@ -956,6 +974,17 @@ export default function DashboardPage() {
                 disabled={!userProfile}
               >
                 {userProfile ? 'Аналитика' : 'Аналитика (загрузка...)'}
+              </button>
+              <button
+                onClick={() => setActiveTab('avito')}
+                className={`py-3 px-1 border-b-2 font-medium text-sm transition-colors ${
+                  activeTab === 'avito'
+                    ? 'border-orange-500 text-orange-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+                disabled={!userProfile}
+              >
+                {userProfile ? 'Авито' : 'Авито (загрузка...)'}
               </button>
             </nav>
           </div>
@@ -1251,6 +1280,21 @@ export default function DashboardPage() {
               orders={orders}
               userProfile={userProfile}
             />
+          )
+        )}
+
+        {/* Авито */}
+        {activeTab === 'avito' && (
+          !userProfile ? (
+            <div className="bg-white rounded-lg border border-gray-200 p-16 text-center">
+              <LoadingSpinner />
+              <p className="mt-4 text-gray-600">Загружаем профиль...</p>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              <AvitoConnection onConnected={handleAvitoConnected} />
+              <AvitoListings onListingUpdate={handleAvitoListingUpdate} />
+            </div>
           )
         )}
 
