@@ -1,0 +1,66 @@
+version: '3.8'
+
+services:
+  avito-backend:
+    build: ./avitobotBE-main
+    ports:
+      - "3001:3000"  # Avito backend на порту 3001
+    environment:
+      - NODE_ENV=development
+      - POSTGRES_HOST=avito-postgres
+      - REDIS_HOST=avito-redis
+      - PORT=3000
+      - GLOBAL_PREFIX=/api
+      - LOG_LEVEL=info
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=dez
+      - POSTGRES_PASSWORD=dezpass
+      - POSTGRES_DB=dez_avito
+      - REDIS_PORT=6379
+      # Avito OAuth (нужно заполнить)
+      - AVITO_CLIENT_ID=${AVITO_CLIENT_ID}
+      - AVITO_CLIENT_SECRET=${AVITO_CLIENT_SECRET}
+      - AVITO_REDIRECT_URI=http://localhost:3001/api/avito/oauth/callback
+      - AVITO_API_BASE=https://api.avito.ru
+      # OpenAI (нужно заполнить)
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - OPENAI_API_BASE=https://api.openai.com/v1
+      - OPENAI_MODEL=gpt-4o-mini
+      # DezExpert API (нужно заполнить)
+      - DEZEXPERT_API_URL=http://localhost:3000
+      - DEZEXPERT_API_KEY=${DEZEXPERT_API_KEY}
+      - DEZEXPERT_LEADS_PATH=/api/v1/leads
+      # JWT
+      - JWT_SECRET=${JWT_SECRET:-supersecret}
+      - JWT_EXPIRES_IN=7d
+      # Webhook
+      - WEBHOOK_SIGNATURE_SECRET=${WEBHOOK_SIGNATURE_SECRET}
+    depends_on:
+      - avito-postgres
+      - avito-redis
+    volumes:
+      - ./avitobotBE-main:/app
+      - /app/node_modules
+    command: sh -c "npm run migration:run && npm run start:dev"
+
+  avito-postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: dez
+      POSTGRES_PASSWORD: dezpass
+      POSTGRES_DB: dez_avito
+    ports:
+      - "5433:5432"  # Avito postgres на порту 5433
+    volumes:
+      - avito_postgres_data:/var/lib/postgresql/data
+
+  avito-redis:
+    image: redis:7-alpine
+    ports:
+      - "6380:6379"  # Avito redis на порту 6380
+    volumes:
+      - avito_redis_data:/data
+
+volumes:
+  avito_postgres_data:
+  avito_redis_data:

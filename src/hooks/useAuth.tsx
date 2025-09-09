@@ -35,8 +35,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const checkAuth = async () => {
       try {
         const token = apiClient.getToken();
+        
         if (token) {
-          // Получаем данные пользователя из API
+          // Сначала пытаемся получить профиль пользователя
           try {
             const response = await fetch('/api/user/profile', {
               headers: {
@@ -48,25 +49,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             if (response.ok) {
               const userData = await response.json();
               setUser(userData);
-            } else {
-              // Если профиль не загружается, возможно токен истек
+            } else if (response.status === 401) {
+              // Если получили 401, токен недействителен
+              console.warn('Токен недействителен, очищаем его');
               apiClient.clearToken();
               setUser(null);
+            } else {
+              // Другие ошибки - не очищаем токен
+              console.error('Ошибка загрузки профиля:', response.status);
             }
           } catch (profileError) {
             console.error('Ошибка загрузки профиля:', profileError);
-            apiClient.clearToken();
-            setUser(null);
+            // Не очищаем токен при сетевых ошибках
           }
         }
       } catch (error) {
-        // Попробуем обновить токен
-        try {
-          await refreshToken();
-        } catch (refreshError) {
-          apiClient.clearToken();
-          setUser(null);
-        }
+        console.error('Ошибка проверки авторизации:', error);
       } finally {
         setIsLoading(false);
       }
@@ -83,7 +81,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       
       const response = await apiClient.refreshToken(refreshToken);
-      apiClient.setToken(response.accessToken);
+      apiClient.setToken(response.accessToken, refreshToken);
       
       // Обновляем пользователя
       try {
@@ -102,6 +100,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.error('Ошибка загрузки профиля после обновления токена:', profileError);
       }
     } catch (error) {
+      // Если обновление токена не удалось, очищаем все токены
+      apiClient.clearToken();
+      setUser(null);
       throw error;
     }
   };

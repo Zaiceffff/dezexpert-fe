@@ -304,6 +304,8 @@ class ApiClient {
     this.token = token;
     if (typeof window !== 'undefined') {
       localStorage.setItem('auth_token', token);
+      // Сохраняем время создания токена для проверки истечения
+      localStorage.setItem('auth_token_created', Date.now().toString());
       if (refreshToken) {
         localStorage.setItem('refresh_token', refreshToken);
       }
@@ -313,14 +315,92 @@ class ApiClient {
   getToken(): string | null {
     if (!this.token && typeof window !== 'undefined') {
       this.token = localStorage.getItem('auth_token');
+      // Если токен есть, но нет времени создания, устанавливаем текущее время
+      if (this.token && !localStorage.getItem('auth_token_created')) {
+        localStorage.setItem('auth_token_created', Date.now().toString());
+      }
     }
     return this.token;
+  }
+
+  // Проверяем, не истек ли токен (7 дней = 7 * 24 * 60 * 60 * 1000 мс)
+  isTokenExpired(): boolean {
+    if (typeof window === 'undefined') return false;
+    
+    const tokenCreated = localStorage.getItem('auth_token_created');
+    if (!tokenCreated) {
+      // Если нет времени создания, но есть токен, считаем что токен валидный
+      // (это может быть старый токен без временной метки)
+      return false;
+    }
+    
+    const createdTime = parseInt(tokenCreated);
+    const now = Date.now();
+    const tokenLifetime = 7 * 24 * 60 * 60 * 1000; // 7 дней в миллисекундах
+    
+    return (now - createdTime) > tokenLifetime;
+  }
+
+  // Автоматическое обновление токена при приближении к истечению
+  async autoRefreshTokenIfNeeded(): Promise<boolean> {
+    if (typeof window === 'undefined') return false;
+    
+    const refreshToken = localStorage.getItem('refresh_token');
+    if (!refreshToken) return false;
+    
+    // Если токен скоро истечет, обновляем его
+    if (this.isTokenExpiringSoon()) {
+      try {
+        console.log('Токен скоро истечет, обновляем автоматически...');
+        const response = await this.refreshToken(refreshToken);
+        this.setToken(response.accessToken, refreshToken);
+        return true;
+      } catch (error) {
+        console.error('Ошибка автоматического обновления токена:', error);
+        return false;
+      }
+    }
+    
+    return false;
+  }
+
+  // Проверяем, скоро ли истечет токен (за 1 час до истечения)
+  isTokenExpiringSoon(): boolean {
+    if (typeof window === 'undefined') return false;
+    
+    const tokenCreated = localStorage.getItem('auth_token_created');
+    if (!tokenCreated) {
+      // Если нет времени создания, считаем что токен не истекает скоро
+      return false;
+    }
+    
+    const createdTime = parseInt(tokenCreated);
+    const now = Date.now();
+    const tokenLifetime = 7 * 24 * 60 * 60 * 1000; // 7 дней в миллисекундах
+    const warningTime = 60 * 60 * 1000; // 1 час в миллисекундах
+    
+    return (now - createdTime) > (tokenLifetime - warningTime);
+  }
+
+  // Получаем время истечения токена
+  getTokenExpirationTime(): Date | null {
+    if (typeof window === 'undefined') return null;
+    
+    const tokenCreated = localStorage.getItem('auth_token_created');
+    if (!tokenCreated) return null;
+    
+    const createdTime = parseInt(tokenCreated);
+    const tokenLifetime = 7 * 24 * 60 * 60 * 1000; // 7 дней в миллисекундах
+    
+    return new Date(createdTime + tokenLifetime);
   }
 
   clearToken() {
     this.token = null;
     if (typeof window !== 'undefined') {
       localStorage.removeItem('auth_token');
+      localStorage.removeItem('auth_token_created');
+      localStorage.removeItem('refresh_token');
     }
   }
 
@@ -331,7 +411,24 @@ class ApiClient {
   ): Promise<T> {
     // Frontend should call external API directly
     const url = getApiUrl(endpoint);
-    const token = this.getToken();
+    let token = this.getToken();
+    
+    // Проверяем, не истек ли токен
+    if (token && this.isTokenExpired()) {
+      console.warn('Токен истек, очищаем его');
+      this.clearToken();
+      throw new Error('Токен авторизации истек. Необходимо войти в систему заново.');
+    }
+    
+    // Пытаемся автоматически обновить токен, если он скоро истечет
+    if (token && this.isTokenExpiringSoon()) {
+      try {
+        await this.autoRefreshTokenIfNeeded();
+        token = this.getToken(); // Получаем обновленный токен
+      } catch (error) {
+        console.warn('Не удалось автоматически обновить токен:', error);
+      }
+    }
     
     const config: RequestInit = {
       headers: {
