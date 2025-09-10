@@ -17,14 +17,14 @@ function getPestText(pestType: string) {
 
 async function getLead(id: string) {
   const base = process.env.APP_BASE_URL || 'https://api.bugbot.ru';
-  const r = await fetch(`${base}/api/leads/${id}`, { cache: 'no-store' });
+  const r = await fetch(`${base}/leads/${id}`, { cache: 'no-store' });
   if (!r.ok) return null;
   return (await r.json()) as any;
 }
 
 async function changeStatus(id: string, status: string) {
   const base = process.env.APP_BASE_URL || 'https://api.bugbot.ru';
-  await fetch(`${base}/api/leads/${id}`, {
+  await fetch(`${base}/leads/${id}`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ status })
@@ -33,7 +33,7 @@ async function changeStatus(id: string, status: string) {
 
 async function triggerReminder(leadId: string) {
   const base = process.env.APP_BASE_URL || 'https://api.bugbot.ru';
-  await fetch(`${base}/api/reminders/schedule`, {
+  await fetch(`${base}/reminders/schedule`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ leadId, scheduledAt: new Date().toISOString(), channel: 'sms' })

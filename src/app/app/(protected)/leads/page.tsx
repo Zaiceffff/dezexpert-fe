@@ -34,7 +34,7 @@ export default function LeadsPage() {
           status: '' 
         }).toString();
         
-        const response = await fetch(`${base}/api/leads?${q}`);
+        const response = await fetch(`${base}/leads?${q}`);
         if (response.ok) {
           const data = await response.json();
           setLeads(data);
