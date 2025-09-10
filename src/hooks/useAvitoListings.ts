@@ -94,7 +94,7 @@ export function useAvitoListings(): UseAvitoListingsReturn {
       }
 
       const response = await fetch(
-        `${process.env.AVITO_BACKEND_URL || 'https://144.124.230.138:3005'}/api/avito/listings/public?${params}`,
+        `${process.env.AVITO_BACKEND_URL || 'http://144.124.230.138:3005'}/api/avito/listings/public?${params}`,
         {
           method: 'GET',
           headers: {
