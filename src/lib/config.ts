@@ -1,7 +1,22 @@
 // src/lib/config.ts — упрощенная конфигурация
 
-// Базовый URL для API
-export const API_BASE_URL = process.env.HOST || 'http://195.200.17.116:3000';
+// Базовый URL для API - используем HTTP для локальной разработки, HTTPS для продакшена
+const getApiBaseUrl = () => {
+  // Если есть переменная окружения, используем её
+  if (process.env.HOST) {
+    return process.env.HOST;
+  }
+  
+  // Для локальной разработки используем HTTP
+  if (process.env.NODE_ENV === 'development') {
+    return 'http://195.200.17.116:3000';
+  }
+  
+  // Для продакшена используем HTTPS
+  return 'https://195.200.17.116:3000';
+};
+
+export const API_BASE_URL = getApiBaseUrl();
 
 // Функция для получения полного URL эндпоинта
 export const getApiUrl = (endpoint: string): string => {
@@ -83,7 +98,7 @@ export const UI_CONFIG = {
 // Переменные окружения для совместимости
 export const ENV = {
   NODE_ENV: process.env.NODE_ENV || 'development',
-  HOST: process.env.HOST || 'http://195.200.17.116:3000',
+  HOST: API_BASE_URL,
   API_BASE_URL: API_BASE_URL,
   DATABASE_URL: process.env.DATABASE_URL,
   JWT_SECRET: process.env.JWT_SECRET,
