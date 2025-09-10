@@ -77,7 +77,7 @@ export function useAvito(): UseAvitoReturn {
       setIsConnecting(true);
       setError(null);
 
-      const response = await fetch('/api/avito/oauth/url', {
+      const response = await fetch(`${process.env.AVITO_BACKEND_URL || 'http://144.124.230.138:3005'}/api/avito/oauth/url`, {
         method: 'GET',
         headers: getAuthHeaders(),
       });
@@ -105,7 +105,7 @@ export function useAvito(): UseAvitoReturn {
       const params = new URLSearchParams({ code });
       if (state) params.append('state', state);
 
-      const response = await fetch(`/api/avito/oauth/callback?${params}`, {
+      const response = await fetch(`${process.env.AVITO_BACKEND_URL || 'http://144.124.230.138:3005'}/api/avito/oauth/callback?${params}`, {
         method: 'GET',
         headers: getAuthHeaders(),
       });
@@ -143,7 +143,7 @@ export function useAvito(): UseAvitoReturn {
       setIsSyncing(true);
       setError(null);
 
-      const response = await fetch('/api/avito/listings', {
+      const response = await fetch(`${process.env.AVITO_BACKEND_URL || 'http://144.124.230.138:3005'}/api/avito/listings`, {
         method: 'POST',
         headers: getAuthHeaders(),
         body: JSON.stringify({ force } as AvitoSyncRequest),
@@ -176,7 +176,7 @@ export function useAvito(): UseAvitoReturn {
     try {
       setError(null);
 
-      const response = await fetch(`/api/avito/listings/${listingId}/ai-toggle`, {
+      const response = await fetch(`${process.env.AVITO_BACKEND_URL || 'http://144.124.230.138:3005'}/api/avito/listings/${listingId}/ai-toggle`, {
         method: 'POST',
         headers: getAuthHeaders(),
         body: JSON.stringify({ enabled } as AvitoToggleRequest),
@@ -215,7 +215,7 @@ export function useAvito(): UseAvitoReturn {
       setIsLoading(true);
       setError(null);
 
-      const response = await fetch('/api/avito/listings/ai-active', {
+      const response = await fetch(`${process.env.AVITO_BACKEND_URL || 'http://144.124.230.138:3005'}/api/avito/listings/ai-active`, {
         method: 'GET',
         headers: getAuthHeaders(),
       });
