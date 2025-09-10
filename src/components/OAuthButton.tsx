@@ -29,7 +29,7 @@ export function OAuthButton({ oauthUrl, onSuccess, isConnected }: OAuthButtonPro
       // Проверяем подключение через некоторое время
       setTimeout(async () => {
         try {
-          const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://api.bugbot.ru/api'}/avito/listings/public?page=1&limit=1`);
+          const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://api.bugbot.ru'}/avito/listings/public?page=1&limit=1`);
           if (response.ok) {
             onSuccess();
           }

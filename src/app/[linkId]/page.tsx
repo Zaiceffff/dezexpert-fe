@@ -454,7 +454,7 @@ export default function ReferralPage() {
       
       // Дополнительно пытаемся получить полную информацию через token-info
       try {
-        const tokenResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://api.bugbot.ru/api'}/user/token-info`, {
+        const tokenResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://api.bugbot.ru'}/user/token-info`, {
           headers: {
             'accept': 'application/json',
             'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6Inpoa3Y1MzFAbWFpbC5ydSIsImlkIjoiOWVjNDEyNjktYzJlNS00YjBiLWI4NmUtMjQzODYwNDgyZGUxIiwibmFtZSI6IllVUklZIiwic3VybmFtZSI6IlpIVUtPViIsInBob25lIjoiNzk1Mjk3MTIxMTgiLCJoYXZlVGVsZWdyYW1Ub2tlbiI6ZmFsc2UsImhhdmVTZXJ2aWNlUHJpY2UiOnRydWUsImlhdCI6MTc1NjUzMDg4NSwiZXhwIjoxNzU5MTIyODg1fQ.6ew27hggudz3aXwb_SPMQzw71DCg52hPrMDRnxWxDtM'
@@ -500,7 +500,7 @@ export default function ReferralPage() {
         
         // Дополнительно получаем расширенную информацию через /user/profile
         try {
-          const profileResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://api.bugbot.ru/api'}/user/profile`, {
+          const profileResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://api.bugbot.ru'}/user/profile`, {
             headers: {
               'accept': 'application/json',
               'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6Inpoa3Y1MzFAbWFpbC5ydSIsImlkIjoiOWVjNDEyNjktYzJlNS00YjBiLWI4NmUtMjQzODYwNDgyZGUxIiwibmFtZSI6IllVUklZIiwic3VybmFtZSI6IlpIVUtPViIsInBob25lIjoiNzk1Mjk3MTIxMTgiLCJoYXZlVGVsZWdyYW1Ub2tlbiI6ZmFsc2UsImlhdCI6MTc1NjUzMDg4NSwiZXhwIjoxNzU5MTIyODg1fQ.6ew27hggudz3aXwb_SPMQzw71DCg52hPrMDRnxWxDtM'

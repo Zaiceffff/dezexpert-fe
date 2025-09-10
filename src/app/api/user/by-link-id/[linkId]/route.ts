@@ -22,7 +22,7 @@ export async function GET(
     // Делаем запрос к внешнему API для получения пользователя по linkId
     try {
       // Сначала попробуем получить пользователя через /user/profile с токеном
-      const profileResponse = await fetch(`${process.env.API_BASE_URL || 'https://api.bugbot.ru/api'}/user/profile`, {
+      const profileResponse = await fetch(`${process.env.API_BASE_URL || 'https://api.bugbot.ru'}/user/profile`, {
         headers: {
           'accept': 'application/json',
           'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InVzZXJAbWFpbC5jb20iLCJpZCI6IjExM2VlMDg5LThhNTctNGEyOS05YmUzLTliMTg4ZWQwODVmZSIsIm5hbWUiOiLQmNCy0LDQvSIsInN1cm5hbWUiOiLQmNCy0LDQvdC-0LIiLCJwaG9uZSI6Ijc3Nzc3Nzc3Nzc3IiwiaGF2ZVRlbGVncmFtVG9rZW4iOmZhbHNlLCJoYXZlU2VydmljZVByaWNlIjp0cnVlLCJpYXQiOjE3NTY1NTAxNDYsImV4cCI6MTc1OTE0MjE0Nn0.9k1zOsw3PyDXh8A2JtsFFVu3j_YrKy-Szwmgo4r5RTE'

@@ -50,7 +50,7 @@ export function useAvitoStats(): UseAvitoStatsReturn {
       }
 
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'https://api.bugbot.ru/api'}/avito/listings/stats?${params}`,
+        `${process.env.NEXT_PUBLIC_API_URL || 'https://api.bugbot.ru'}/avito/listings/stats?${params}`,
         {
           method: 'GET',
           headers: {

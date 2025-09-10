@@ -27,7 +27,7 @@ export async function POST(
     }
 
     // Проверяем, запущен ли Avito бэкенд
-    const avitoBackendUrl = process.env.AVITO_BACKEND_URL || 'https://api.bugbot.ru/api';
+    const avitoBackendUrl = process.env.AVITO_BACKEND_URL || 'https://api.bugbot.ru';
     
     try {
       // Пробуем подключиться к Avito бэкенду
