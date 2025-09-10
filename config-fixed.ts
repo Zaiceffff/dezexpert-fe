@@ -9,11 +9,11 @@ const getApiBaseUrl = () => {
   
   // Для локальной разработки используем HTTP
   if (process.env.NODE_ENV === 'development') {
-    return 'http://195.200.17.116:3000';
+    return process.env.API_BASE_URL || 'http://localhost:3000';
   }
   
   // Для продакшена используем HTTPS
-  return 'https://195.200.17.116:3000';
+  return process.env.API_BASE_URL || 'https://api.bugbot.ru/api';
 };
 
 export const API_BASE_URL = getApiBaseUrl();

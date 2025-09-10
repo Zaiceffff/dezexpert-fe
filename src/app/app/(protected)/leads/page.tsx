@@ -26,7 +26,7 @@ export default function LeadsPage() {
     // Загружаем лиды
     const fetchLeads = async () => {
       try {
-        const base = process.env.NEXT_PUBLIC_APP_BASE_URL || 'http://localhost:3000';
+        const base = process.env.NEXT_PUBLIC_APP_BASE_URL || 'https://api.bugbot.ru/api';
         const q = new URLSearchParams({ 
           partnerId, 
           limit: '50', 

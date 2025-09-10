@@ -1,11 +1,11 @@
 // API Configuration
 export const API_CONFIG = {
-  BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3005/api',
+  BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.bugbot.ru/api',
   TIMEOUT: parseInt(process.env.NEXT_PUBLIC_API_TIMEOUT || '10000'),
   RETRY_ATTEMPTS: parseInt(process.env.NEXT_PUBLIC_API_RETRY_ATTEMPTS || '3'),
   RETRY_DELAY: parseInt(process.env.NEXT_PUBLIC_API_RETRY_DELAY || '1000'),
   // Avito OAuth configuration
-  AVITO_OAUTH_REDIRECT_URI: process.env.NEXT_PUBLIC_AVITO_OAUTH_REDIRECT_URI || 'http://localhost:3005/api/avito/oauth/callback',
+  AVITO_OAUTH_REDIRECT_URI: process.env.NEXT_PUBLIC_AVITO_OAUTH_REDIRECT_URI || 'https://api.bugbot.ru/api/avito/oauth/callback',
 } as const;
 
 // API Endpoints

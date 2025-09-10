@@ -78,7 +78,7 @@ npm run start:dev
 Обновите `src/lib/config.ts`:
 
 ```typescript
-export const API_BASE_URL = process.env.HOST || 'http://195.200.17.116:3000';
+export const API_BASE_URL = process.env.HOST || 'https://api.bugbot.ru/api';
 export const AVITO_API_BASE_URL = process.env.AVITO_API_URL || 'http://localhost:3001';
 ```
 

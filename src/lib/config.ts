@@ -3,17 +3,21 @@
 // Базовый URL для API - используем HTTP для локальной разработки, HTTPS для продакшена
 const getApiBaseUrl = () => {
   // Если есть переменная окружения, используем её
+  if (process.env.NEXT_PUBLIC_API_URL) {
+    return process.env.NEXT_PUBLIC_API_URL;
+  }
+  
   if (process.env.HOST) {
     return process.env.HOST;
   }
   
   // Для локальной разработки используем HTTP
   if (process.env.NODE_ENV === 'development') {
-    return 'http://195.200.17.116:3000';
+    return process.env.API_BASE_URL || 'https://api.bugbot.ru/api';
   }
   
   // Для продакшена используем HTTPS
-  return 'https://195.200.17.116:3000';
+  return process.env.API_BASE_URL || 'https://api.bugbot.ru/api';
 };
 
 export const API_BASE_URL = getApiBaseUrl();

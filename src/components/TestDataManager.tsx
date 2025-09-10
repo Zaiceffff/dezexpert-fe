@@ -19,7 +19,7 @@ export function TestDataManager({ onDataCreated }: TestDataManagerProps) {
       setLoading(true);
       setError(null);
 
-      const response = await fetch('http://localhost:3005/api/avito/listings/seed', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://api.bugbot.ru/api'}/avito/listings/seed`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -55,7 +55,7 @@ export function TestDataManager({ onDataCreated }: TestDataManagerProps) {
       setLoading(true);
       setError(null);
 
-      const response = await fetch('http://localhost:3005/api/avito/listings/fetch-real', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://api.bugbot.ru/api'}/avito/listings/fetch-real`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

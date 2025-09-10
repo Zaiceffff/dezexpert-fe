@@ -58,7 +58,7 @@ const nextConfig = {
     return [
       {
         source: '/api/proxy/:path*',
-        destination: 'https://195.200.17.116:3000/api/:path*',
+        destination: `${process.env.API_BASE_URL || 'https://api.bugbot.ru/api'}/:path*`,
       },
     ];
   },

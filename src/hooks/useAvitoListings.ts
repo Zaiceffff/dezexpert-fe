@@ -94,7 +94,7 @@ export function useAvitoListings(): UseAvitoListingsReturn {
       }
 
       const response = await fetch(
-        `http://localhost:3005/api/avito/listings/public?${params}`,
+        `${process.env.NEXT_PUBLIC_API_URL || 'https://api.bugbot.ru/api'}/avito/listings/public?${params}`,
         {
           method: 'GET',
           headers: {

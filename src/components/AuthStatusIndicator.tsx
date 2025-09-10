@@ -38,7 +38,7 @@ export function AuthStatusIndicator({ showDetails = false, onReconnect }: AuthSt
     } else {
       // Открываем OAuth URL
       try {
-        const response = await fetch('http://localhost:3005/api/avito/oauth/url');
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://api.bugbot.ru/api'}/avito/oauth/url`);
         const data = await response.json();
         if (data.url) {
           window.open(data.url, '_blank', 'width=600,height=700');

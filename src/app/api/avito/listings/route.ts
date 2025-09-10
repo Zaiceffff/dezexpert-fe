@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Проверяем, запущен ли Avito бэкенд
-    const avitoBackendUrl = process.env.AVITO_BACKEND_URL || 'http://localhost:3005';
+    const avitoBackendUrl = process.env.AVITO_BACKEND_URL || 'https://api.bugbot.ru/api';
     
     try {
       // Пробуем подключиться к Avito бэкенду
@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
 
     // Проверяем, запущен ли Avito бэкенд
-    const avitoBackendUrl = process.env.AVITO_BACKEND_URL || 'http://localhost:3005';
+    const avitoBackendUrl = process.env.AVITO_BACKEND_URL || 'https://api.bugbot.ru/api';
     
     try {
       // Пробуем подключиться к Avito бэкенду

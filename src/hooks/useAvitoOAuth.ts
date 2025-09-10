@@ -36,7 +36,7 @@ export function useAvitoOAuth(): UseAvitoOAuthReturn {
       setLoading(true);
       setError(null);
 
-      const response = await fetch('http://localhost:3005/api/avito/oauth/url', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://api.bugbot.ru/api'}/avito/oauth/url`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -68,7 +68,7 @@ export function useAvitoOAuth(): UseAvitoOAuthReturn {
       setError(null);
 
       // Проверяем статус подключения через проверку объявлений
-      const response = await fetch('http://localhost:3005/api/avito/listings/public?page=1&limit=1', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://api.bugbot.ru/api'}/avito/listings/public?page=1&limit=1`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',

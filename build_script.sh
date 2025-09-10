@@ -1,7 +1,7 @@
 #!/bin/bash
 
 echo "Подключение к серверу..."
-ssh root@91.84.98.183 << 'EOF'
+ssh root@${DEPLOY_HOST:-91.84.98.183} << 'EOF'
 echo "Переход в директорию проекта..."
 cd /root/dezexpert-fe
 

@@ -43,7 +43,7 @@ export function AuthNotification({ onReconnect }: AuthNotificationProps) {
       onReconnect();
     } else {
       // Открываем OAuth URL
-      fetch('http://localhost:3005/api/avito/oauth/url')
+      fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://api.bugbot.ru/api'}/avito/oauth/url`)
         .then(response => response.json())
         .then(data => {
           if (data.url) {
