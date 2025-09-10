@@ -2,6 +2,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  // Добавляем версионирование для борьбы с кэшированием
+  generateBuildId: async () => {
+    return `build-${Date.now()}`;
+  },
   eslint: {
     // Не блокировать сборку из-за ESLint-ошибок (особенно для демо/маркетинга)
     ignoreDuringBuilds: true
@@ -38,9 +42,18 @@ const nextConfig = {
           },
         ],
       },
+      {
+        source: '/_next/static/(.*)',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
+          },
+        ],
+      },
     ];
   },
-  // Настройки для работы с внешними доменами
+  // Настройки для работы с проксированием
   async rewrites() {
     return [
       {
