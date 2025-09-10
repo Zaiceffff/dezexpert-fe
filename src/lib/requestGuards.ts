@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server';
 import { rateLimit } from './rateLimit';
 import { verifyCsrf } from './csrf';
 
-const postPathsWithCsrf = new Set(['/api/leads', '/api/sms/send', '/api/reminders/schedule', '/api/ai/proxy']);
+const postPathsWithCsrf = new Set(['/leads', '/sms/send', '/reminders/schedule', '/ai/proxy']);
 
 export function withGuards(
   handler: (req: NextRequest, ctx?: Record<string, unknown>) => Promise<NextResponse>

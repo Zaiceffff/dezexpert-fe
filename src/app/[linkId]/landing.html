@@ -530,7 +530,7 @@
         // Загрузка тарифов
         async function loadTariffs() {
             try {
-                const response = await fetch('/api/tariff/list');
+                const response = await fetch('/tariff/list');
                 if (response.ok) {
                     const data = await response.json();
                     displayTariffs(data.tariffs || []);
@@ -648,7 +648,7 @@
                     linkId: window.location.pathname.split('/')[1] || null
                 };
                 
-                const response = await fetch('/api/order', {
+                const response = await fetch('/order', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

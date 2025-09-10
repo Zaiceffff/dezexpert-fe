@@ -13,7 +13,7 @@ const getApiBaseUrl = () => {
   }
   
   // Для продакшена используем HTTPS
-  return process.env.API_BASE_URL || 'https://api.bugbot.ru/api';
+  return process.env.API_BASE_URL || 'https://api.bugbot.ru';
 };
 
 export const API_BASE_URL = getApiBaseUrl();

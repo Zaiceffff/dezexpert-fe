@@ -153,7 +153,7 @@ export default function SettingsPage() {
           return;
         }
 
-        const response = await fetch('/api/user/service', {
+        const response = await fetch('/user/service', {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'

@@ -43,7 +43,7 @@ export function useAuthPersistence(): UseAuthPersistenceReturn {
       }
 
       // Проверяем валидность токена через API
-      const response = await fetch('/api/auth/verify', {
+      const response = await fetch('/auth/verify', {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,

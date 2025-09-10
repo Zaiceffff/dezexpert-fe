@@ -13,11 +13,11 @@ const getApiBaseUrl = () => {
   
   // Для локальной разработки используем HTTP
   if (process.env.NODE_ENV === 'development') {
-    return process.env.API_BASE_URL || 'https://api.bugbot.ru/api';
+    return process.env.API_BASE_URL || 'https://api.bugbot.ru';
   }
   
   // Для продакшена используем HTTPS
-  return process.env.API_BASE_URL || 'https://api.bugbot.ru/api';
+  return process.env.API_BASE_URL || 'https://api.bugbot.ru';
 };
 
 export const API_BASE_URL = getApiBaseUrl();
@@ -32,51 +32,51 @@ export const API_CONFIG = {
   BASE_URL: API_BASE_URL,
   ENDPOINTS: {
     AUTH: {
-      REGISTER: '/api/auth/register',
-      LOGIN: '/api/auth/login',
-      REFRESH: '/api/auth/refresh',
-      RECOVER_PASSWORD: '/api/auth/recover-password',
-      RESET_PASSWORD: '/api/auth/reset-password',
+      REGISTER: '/auth/register',
+      LOGIN: '/auth/login',
+      REFRESH: '/auth/refresh',
+      RECOVER_PASSWORD: '/auth/recover-password',
+      RESET_PASSWORD: '/auth/reset-password',
     },
     USER: {
-      PROFILE: '/api/user/profile',
-      SERVICE: '/api/user/service',
-      TOKEN_INFO: '/api/user/token-info',
-      BY_ID: '/api/user/by-id',
-      BY_LINK_ID: '/api/user/by-link-id',
-      UPDATE_STATUS: '/api/user/update-status',
-      DELETE: '/api/user/delete',
+      PROFILE: '/user/profile',
+      SERVICE: '/user/service',
+      TOKEN_INFO: '/user/token-info',
+      BY_ID: '/user/by-id',
+      BY_LINK_ID: '/user/by-link-id',
+      UPDATE_STATUS: '/user/update-status',
+      DELETE: '/user/delete',
     },
     ORDER: {
-      CREATE: '/api/order',
-      LIST: '/api/order/list',
-      BY_ID: '/api/order/by-id',
-      UPDATE: '/api/order/update',
+      CREATE: '/order',
+      LIST: '/order/list',
+      BY_ID: '/order/by-id',
+      UPDATE: '/order/update',
     },
     LEADS: {
-      CREATE: '/api/leads',
-      LIST: '/api/leads',
-      BY_ID: '/api/leads',
-      UPDATE_STATUS: '/api/leads',
+      CREATE: '/leads',
+      LIST: '/leads',
+      BY_ID: '/leads',
+      UPDATE_STATUS: '/leads',
     },
     PARTNERS: {
-      PRICING: '/api/partners',
+      PRICING: '/partners',
     },
     PAYMENT: {
-      SUBSCRIPTION_LINK: '/api/payment/subscription-link',
-      PAYMENT_LINK: '/api/payment/payment-link',
+      SUBSCRIPTION_LINK: '/payment/subscription-link',
+      PAYMENT_LINK: '/payment/payment-link',
     },
     TARIFF: {
-      LIST: '/api/tariff/list',
+      LIST: '/tariff/list',
     },
     REMINDERS: {
-      SCHEDULE: '/api/reminders/schedule',
+      SCHEDULE: '/reminders/schedule',
     },
     SMS: {
-      SEND: '/api/sms/send',
+      SEND: '/sms/send',
     },
     AI: {
-      PROXY: '/api/ai/proxy',
+      PROXY: '/ai/proxy',
     },
     AVITO: {
       OAUTH_URL: '/api/avito/oauth/url',

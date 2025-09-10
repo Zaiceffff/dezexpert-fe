@@ -58,7 +58,7 @@ const nextConfig = {
     return [
       {
         source: '/api/proxy/:path*',
-        destination: `${process.env.API_BASE_URL || 'https://api.bugbot.ru/api'}/:path*`,
+        destination: `${process.env.API_BASE_URL || 'https://api.bugbot.ru'}/:path*`,
       },
     ];
   },

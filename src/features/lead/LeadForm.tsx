@@ -69,7 +69,7 @@ export default function LeadForm({ partnerId, csrfToken }: Props) {
 
   const onSubmit = methods.handleSubmit(async (data) => {
     try {
-      const r = await fetch('/api/leads', {
+      const r = await fetch('/leads', {
         method: 'POST',
         headers: {
           'content-type': 'application/json',

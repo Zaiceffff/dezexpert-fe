@@ -39,7 +39,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (token) {
           // Сначала пытаемся получить профиль пользователя
           try {
-            const response = await fetch('/api/user/profile', {
+            const response = await fetch('/user/profile', {
               headers: {
                 'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
@@ -85,7 +85,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       // Обновляем пользователя
       try {
-        const profileResponse = await fetch('/api/user/profile', {
+        const profileResponse = await fetch('/user/profile', {
           headers: {
             'Authorization': `Bearer ${response.accessToken}`,
             'Content-Type': 'application/json'
