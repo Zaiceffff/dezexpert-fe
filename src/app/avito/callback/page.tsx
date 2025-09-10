@@ -43,7 +43,7 @@ export default function AvitoCallbackPage() {
       setMessage('Обработка авторизации...');
 
       // Вызываем API для обработки OAuth callback
-      const response = await fetch(`${process.env.AVITO_BACKEND_URL || 'http://144.124.230.138:3005'}/api/avito/oauth/callback/public`, {
+      const response = await fetch(`${process.env.AVITO_BACKEND_URL || 'https://144.124.230.138:3005'}/api/avito/oauth/callback/public`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',

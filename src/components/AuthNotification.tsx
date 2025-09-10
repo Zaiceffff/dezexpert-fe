@@ -43,7 +43,7 @@ export function AuthNotification({ onReconnect }: AuthNotificationProps) {
       onReconnect();
     } else {
       // Открываем OAuth URL
-      fetch(`${process.env.AVITO_BACKEND_URL || 'http://144.124.230.138:3005'}/api/avito/oauth/url`)
+      fetch(`${process.env.AVITO_BACKEND_URL || 'https://144.124.230.138:3005'}/api/avito/oauth/url`)
         .then(response => response.json())
         .then(data => {
           if (data.url) {

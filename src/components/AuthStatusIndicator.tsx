@@ -38,7 +38,7 @@ export function AuthStatusIndicator({ showDetails = false, onReconnect }: AuthSt
     } else {
       // Открываем OAuth URL
       try {
-        const response = await fetch(`${process.env.AVITO_BACKEND_URL || 'http://144.124.230.138:3005'}/api/avito/oauth/url`);
+        const response = await fetch(`${process.env.AVITO_BACKEND_URL || 'https://144.124.230.138:3005'}/api/avito/oauth/url`);
         const data = await response.json();
         if (data.url) {
           window.open(data.url, '_blank', 'width=600,height=700');
