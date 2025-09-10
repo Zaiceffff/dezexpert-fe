@@ -46,7 +46,7 @@ export default function AvitoCallbackPage() {
       const params = new URLSearchParams({ code });
       if (state) params.append('state', state);
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://api.bugbot.ru'}/avito/oauth/callback/public?${params}`, {
+      const response = await fetch(`${process.env.AVITO_BACKEND_URL || 'http://144.124.230.138:3005'}/api/avito/oauth/callback/public?${params}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',

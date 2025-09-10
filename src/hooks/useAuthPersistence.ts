@@ -82,7 +82,7 @@ export function useAuthPersistence(): UseAuthPersistenceReturn {
 
   const checkAvitoConnection = useCallback(async (): Promise<boolean> => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://api.bugbot.ru'}/avito/listings/public?page=1&limit=1`, {
+      const response = await fetch(`${process.env.AVITO_BACKEND_URL || 'http://144.124.230.138:3005'}/api/avito/listings/public?page=1&limit=1`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
