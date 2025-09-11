@@ -43,7 +43,7 @@ export function AvitoListings({ onListingUpdate }: AvitoListingsProps) {
 
   const handleSync = async () => {
     if (accessToken) {
-      await getListings(1);
+      await getListings(1, 'active');
     }
   };
 
@@ -67,7 +67,7 @@ export function AvitoListings({ onListingUpdate }: AvitoListingsProps) {
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
-    getListings(page);
+    getListings(page, 'active');
   };
 
   // Фильтрация объявлений

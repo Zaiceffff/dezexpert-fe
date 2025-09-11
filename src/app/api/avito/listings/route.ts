@@ -1,5 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getApiUrl } from '@/lib/config';
+import { type NextRequest, NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -9,6 +8,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const page = searchParams.get('page') || '1';
     const limit = searchParams.get('limit') || '10';
+    const status = searchParams.get('status') || 'active'; // По умолчанию только активные
     
     if (!token) {
       return NextResponse.json({ error: 'Необходима авторизация' }, { status: 401 });
@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
     
     try {
       // Пробуем подключиться к Avito бэкенду
-      const response = await fetch(`${avitoBackendUrl}/api/avito/listings?page=${page}&limit=${limit}`, {
+      const response = await fetch(`${avitoBackendUrl}/api/avito/listings?page=${page}&limit=${limit}&status=${status}`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -30,6 +30,15 @@ export async function GET(request: NextRequest) {
 
       if (response.ok) {
         const data = await response.json();
+        
+        // Если API не поддерживает фильтрацию по статусу, фильтруем на стороне клиента
+        if (data.data && data.data.items && Array.isArray(data.data.items)) {
+          if (status === 'active') {
+            data.data.items = data.data.items.filter((item: { status: string }) => item.status === 'active');
+            data.data.pagination.total = data.data.items.length;
+          }
+        }
+        
         return NextResponse.json(data);
       }
     } catch (backendError) {

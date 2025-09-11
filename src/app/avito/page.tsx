@@ -74,8 +74,8 @@ function AvitoCallbackContent() {
       // Получаем токен
       const token = await getAvitoToken(code);
       
-      // Получаем объявления с токеном
-      const items = await getAvitoItems(token, 1);
+      // Получаем только активные объявления с токеном
+      const items = await getAvitoItems(token, 1, 'active');
       
       setStatus('success');
       setMessage('✅ Avito успешно подключен');

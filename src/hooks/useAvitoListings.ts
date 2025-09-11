@@ -33,9 +33,9 @@ interface UseAvitoListingsReturn {
   error: string | null;
   accessToken: string | null;
   getToken: (code: string) => Promise<boolean>;
-  getListings: (page?: number) => Promise<void>;
+  getListings: (page?: number, status?: string) => Promise<void>;
   getAvitoToken: (code: string) => Promise<string>;
-  getAvitoItems: (token: string, page?: number) => Promise<AvitoListing[]>;
+  getAvitoItems: (token: string, page?: number, status?: string) => Promise<AvitoListing[]>;
   setAccessToken: (token: string | null) => void;
   setListings: (listings: AvitoListing[]) => void;
   clearError: () => void;
@@ -119,9 +119,9 @@ export function useAvitoListings(): UseAvitoListingsReturn {
     }
   }, [getAvitoToken, handleError, setAccessTokenWithPersistence]);
 
-  const getAvitoItems = useCallback(async (token: string, page: number = 1): Promise<AvitoListing[]> => {
+  const getAvitoItems = useCallback(async (token: string, page: number = 1, status: string = 'active'): Promise<AvitoListing[]> => {
     try {
-      const response = await fetch(`${API_BASE_URL}/avito/items?page=${page}`, {
+      const response = await fetch(`${API_BASE_URL}/avito/items?page=${page}&status=${status}`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -172,7 +172,7 @@ export function useAvitoListings(): UseAvitoListingsReturn {
     }
   }, []);
 
-  const getListings = useCallback(async (page: number = 1): Promise<void> => {
+  const getListings = useCallback(async (page: number = 1, status: string = 'active'): Promise<void> => {
     if (!accessToken) {
       setError('Токен не найден. Необходимо авторизоваться');
       return;
@@ -182,7 +182,7 @@ export function useAvitoListings(): UseAvitoListingsReturn {
       setLoading(true);
       setError(null);
 
-      const items = await getAvitoItems(accessToken, page);
+      const items = await getAvitoItems(accessToken, page, status);
       setListings(items);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Неизвестная ошибка';

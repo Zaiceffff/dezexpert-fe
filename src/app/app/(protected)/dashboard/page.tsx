@@ -376,8 +376,8 @@ export default function DashboardPage() {
       const savedToken = localStorage.getItem('avito_token');
       if (savedToken) {
         setAvitoToken(savedToken);
-        // Загружаем объявления если есть токен
-        getAvitoListings(1);
+        // Загружаем только активные объявления если есть токен
+        getAvitoListings(1, 'active');
       }
     };
     
