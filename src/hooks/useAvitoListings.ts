@@ -1,68 +1,55 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { toast } from 'sonner';
+import { AvitoListing } from '@/components/AvitoListingCard';
 
-export interface AvitoListing {
-  id: string;
-  avitoId: string;
-  title: string;
-  category: string;
-  price: number;
-  status: string;
-  aiAssistantIsOn: boolean;
-  createdAt: string;
-  updatedAt: string;
+interface AvitoTokenResponse {
+  success: boolean;
+  access_token: string;
+  expires_in?: number;
 }
 
-export interface AvitoListingsResponse {
+interface AvitoListingsResponse {
   success: boolean;
   data: {
-    listings: AvitoListing[];
+    items: AvitoListing[];
     pagination: {
       page: number;
-      limit: number;
+      per_page: number;
       total: number;
-      totalPages: number;
+      total_pages: number;
     };
   };
 }
 
-export interface AvitoStatsResponse {
-  success: boolean;
-  data: {
-    total: number;
-    active: number;
-    withAi: number;
-    blocked: number;
-    statusStats: Array<{ status: string; count: string }>;
-    categoryStats: Array<{ category: string; count: string }>;
-  };
-}
-
-export interface UseAvitoListingsReturn {
+interface UseAvitoListingsReturn {
   listings: AvitoListing[];
-  loading: boolean;
-  error: string | null;
   pagination: {
     page: number;
-    limit: number;
+    per_page: number;
     total: number;
-    totalPages: number;
-  };
-  fetchListings: (page?: number, limit?: number, userId?: string) => Promise<void>;
-  refreshListings: () => Promise<void>;
+    total_pages: number;
+  } | null;
+  loading: boolean;
+  error: string | null;
+  accessToken: string | null;
+  getToken: (code: string) => Promise<boolean>;
+  getListings: (page?: number) => Promise<void>;
   clearError: () => void;
 }
 
+const API_BASE_URL = 'https://v467850.hosted-by-vdsina.com/api';
+
 export function useAvitoListings(): UseAvitoListingsReturn {
   const [listings, setListings] = useState<AvitoListing[]>([]);
+  const [pagination, setPagination] = useState<{
+    page: number;
+    per_page: number;
+    total: number;
+    total_pages: number;
+  } | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [pagination, setPagination] = useState({
-    page: 1,
-    limit: 20,
-    total: 0,
-    totalPages: 0,
-  });
+  const [accessToken, setAccessToken] = useState<string | null>(null);
 
   const clearError = useCallback(() => {
     setError(null);
@@ -72,68 +59,94 @@ export function useAvitoListings(): UseAvitoListingsReturn {
     const message = error?.message || error?.error || defaultMessage;
     setError(message);
     toast.error(message);
-    console.error('Avito Listings API Error:', error);
+    console.error('Avito API Error:', error);
   }, []);
 
-  const fetchListings = useCallback(async (
-    page = 1, 
-    limit = 20, 
-    userId?: string
-  ): Promise<void> => {
+  const getToken = useCallback(async (code: string): Promise<boolean> => {
     try {
       setLoading(true);
       setError(null);
 
-      const params = new URLSearchParams({
-        page: page.toString(),
-        limit: limit.toString(),
+      const response = await fetch(`${API_BASE_URL}/avito/token?code=${code}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
       });
-      
-      if (userId) {
-        params.append('userId', userId);
-      }
-
-      const response = await fetch(
-        `${process.env.AVITO_BACKEND_URL || 'https://v467850.hosted-by-vdsina.com/api/docs'}/api/avito/listings/public?${params}`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }
-      );
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Ошибка загрузки объявлений');
+        throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
       }
 
-      const data: AvitoListingsResponse = await response.json();
+      const data: AvitoTokenResponse = await response.json();
       
-      if (data.success) {
-        setListings(data.data.listings);
-        setPagination(data.data.pagination);
+      if (data.success && data.access_token) {
+        setAccessToken(data.access_token);
+        toast.success('Токен успешно получен');
+        return true;
       } else {
-        throw new Error('Не удалось загрузить объявления');
+        throw new Error('Не удалось получить токен');
       }
     } catch (error) {
-      handleError(error, 'Ошибка загрузки объявлений');
+      handleError(error, 'Ошибка получения токена');
+      return false;
     } finally {
       setLoading(false);
     }
   }, [handleError]);
 
-  const refreshListings = useCallback(async (): Promise<void> => {
-    await fetchListings(pagination.page, pagination.limit);
-  }, [fetchListings, pagination.page, pagination.limit]);
+  const getListings = useCallback(async (page: number = 1): Promise<void> => {
+    if (!accessToken) {
+      setError('Токен не найден');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      const response = await fetch(`${API_BASE_URL}/avito/items?page=${page}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          setAccessToken(null);
+          throw new Error('Токен истек. Необходимо повторно авторизоваться');
+        }
+        
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data: AvitoListingsResponse = await response.json();
+      
+      if (data.success && data.data) {
+        setListings(data.data.items);
+        setPagination(data.data.pagination);
+      } else {
+        throw new Error('Не удалось получить объявления');
+      }
+    } catch (error) {
+      handleError(error, 'Ошибка получения объявлений');
+    } finally {
+      setLoading(false);
+    }
+  }, [accessToken, handleError]);
 
   return {
     listings,
+    pagination,
     loading,
     error,
-    pagination,
-    fetchListings,
-    refreshListings,
+    accessToken,
+    getToken,
+    getListings,
     clearError,
   };
 }

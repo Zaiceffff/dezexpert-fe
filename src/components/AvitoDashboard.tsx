@@ -16,7 +16,7 @@ import { Button } from './ui/button';
 import { RefreshCw, Settings, BarChart3, MessageSquare } from 'lucide-react';
 
 export default function AvitoDashboard() {
-  const { listings, loading, fetchListings, refreshListings } = useAvitoListings();
+  const { listings, loading, getListings, accessToken } = useAvitoListings();
   const { stats, fetchStats } = useAvitoStats();
   const { oauthUrl, initiateOAuth, checkConnection } = useAvitoOAuth();
   const { authStatus, refreshAuth, checkAvitoConnection } = useAuthPersistence();
@@ -32,21 +32,21 @@ export default function AvitoDashboard() {
       // Загружаем данные только если авторизованы
       if (authStatus.isAuthenticated) {
         await Promise.all([
-          fetchListings(),
+          getListings(),
           fetchStats()
         ]);
       }
     };
     
     loadData();
-  }, [authStatus.isAuthenticated, checkAvitoConnection, fetchListings, fetchStats]);
+  }, [authStatus.isAuthenticated, checkAvitoConnection, getListings, fetchStats]);
 
   const handleOAuthSuccess = async () => {
     setIsConnected(true);
     // Обновляем статус авторизации
     await refreshAuth();
     await Promise.all([
-      fetchListings(),
+      getListings(),
       fetchStats()
     ]);
   };
@@ -55,14 +55,14 @@ export default function AvitoDashboard() {
     // Обновляем статус авторизации
     await refreshAuth();
     await Promise.all([
-      refreshListings(),
+      getListings(),
       fetchStats()
     ]);
   };
 
   const handleDataCreated = async () => {
     await Promise.all([
-      fetchListings(),
+      getListings(),
       fetchStats()
     ]);
   };

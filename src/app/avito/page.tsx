@@ -1,41 +1,64 @@
 'use client';
 
-import { useEffect, useState, Suspense } from 'react';
+import { useEffect, useState, Suspense, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Button } from '@/components/ui/button';
-import { CheckCircle, ArrowRight, AlertCircle, RefreshCw } from 'lucide-react';
+import { CheckCircle, ArrowRight, AlertCircle, RefreshCw, Package, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
+import { useAvitoListings } from '@/hooks/useAvitoListings';
+import { AvitoListingCard, AvitoListing } from '@/components/AvitoListingCard';
+import { AvitoFilters, AvitoStatus } from '@/components/AvitoFilters';
+import { AvitoPagination } from '@/components/AvitoPagination';
 
 function AvitoCallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
+  const [status, setStatus] = useState<'loading' | 'success' | 'error' | 'listings'>('loading');
   const [message, setMessage] = useState('');
   const [countdown, setCountdown] = useState(5);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [selectedStatus, setSelectedStatus] = useState<AvitoStatus | 'all'>('all');
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const {
+    listings,
+    pagination,
+    loading,
+    error,
+    accessToken,
+    getToken,
+    getListings,
+    clearError,
+  } = useAvitoListings();
 
   useEffect(() => {
-    const code = searchParams.get('code');
-    const state = searchParams.get('state');
-    const error = searchParams.get('error');
+    try {
+      const code = searchParams.get('code');
+      const state = searchParams.get('state');
+      const error = searchParams.get('error');
 
-    console.log('OAuth Callback received:', { code, state, error });
+      console.log('OAuth Callback received:', { code, state, error });
 
-    if (error) {
+      if (error) {
+        setStatus('error');
+        setMessage('Ошибка авторизации: ' + error);
+        return;
+      }
+
+      if (!code) {
+        setStatus('error');
+        setMessage('Отсутствует код авторизации');
+        return;
+      }
+
+      // Обрабатываем OAuth callback
+      handleOAuthCallback(code, state || undefined);
+    } catch (error) {
+      console.error('Error in useEffect:', error);
       setStatus('error');
-      setMessage('Ошибка авторизации: ' + error);
-      return;
+      setMessage('Ошибка обработки параметров');
     }
-
-    if (!code) {
-      setStatus('error');
-      setMessage('Отсутствует код авторизации');
-      return;
-    }
-
-    // Обрабатываем OAuth callback
-    handleOAuthCallback(code, state || undefined);
   }, [searchParams]);
 
   const handleOAuthCallback = async (code: string, state?: string) => {
@@ -44,75 +67,23 @@ function AvitoCallbackContent() {
       setStatus('loading');
       setMessage('Подключение к Avito...');
 
-      // Вызываем API для получения токена
-      const params = new URLSearchParams({ code });
-      if (state) params.append('state', state);
-
-      const backendUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://v467850.hosted-by-vdsina.com';
-      const apiUrl = `${backendUrl}/api/avito/oauth/callback/public?${params}`;
+      // Получаем токен
+      const tokenSuccess = await getToken(code);
       
-      console.log('Environment variables:');
-      console.log('NEXT_PUBLIC_API_BASE_URL:', process.env.NEXT_PUBLIC_API_BASE_URL);
-      console.log('Backend URL:', backendUrl);
-      console.log('Code:', code);
-      console.log('State:', state);
-      console.log('Making request to:', apiUrl);
-
-      const response = await fetch(apiUrl, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      console.log('Response status:', response.status);
-      console.log('Response headers:', Object.fromEntries(response.headers.entries()));
-
-      const responseText = await response.text();
-      console.log('Response text:', responseText);
-
-      if (!response.ok) {
-        console.error('Error response:', responseText);
-        throw new Error(`Ошибка подключения к Avito (${response.status})`);
-      }
-
-      // Проверяем, является ли ответ HTML (ошибка) или JSON (успех)
-      if (responseText.includes('<html>')) {
-        // Это HTML страница с ошибкой
-        if (responseText.includes('❌ Ошибка подключения')) {
-          throw new Error('Ошибка подключения к Avito: не удалось получить токен');
-        } else if (responseText.includes('✅ Подключение успешно')) {
-          // Это успешный HTML ответ
-          setStatus('success');
-          setMessage('✅ Avito успешно подключен');
-          toast.success('Avito успешно подключен!');
-          
-          // Запускаем обратный отсчет
-          startCountdown();
-          return;
-        } else {
-          throw new Error('Неожиданный ответ от сервера');
-        }
-      }
-
-      // Пытаемся распарсить JSON
-      let data;
-      try {
-        data = JSON.parse(responseText);
-        console.log('Response data:', data);
-      } catch {
-        throw new Error('Не удалось обработать ответ сервера');
-      }
-      
-      if (data.success || data.access_token) {
+      if (tokenSuccess) {
         setStatus('success');
         setMessage('✅ Avito успешно подключен');
         toast.success('Avito успешно подключен!');
         
-        // Запускаем обратный отсчет
+        // Получаем объявления
+        await getListings(1);
+        setStatus('listings');
+        
+        // Запускаем обратный отсчет для редиректа
         startCountdown();
       } else {
-        throw new Error('Не удалось подключиться к Avito');
+        setStatus('error');
+        setMessage('❌ Ошибка подключения');
       }
     } catch (error) {
       console.error('OAuth Callback Error:', error);
@@ -149,100 +120,203 @@ function AvitoCallbackContent() {
     }
   };
 
+  const handleStatusChange = (status: AvitoStatus | 'all') => {
+    setSelectedStatus(status);
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    getListings(page);
+  };
+
+  // Фильтрация объявлений
+  const filteredListings = useMemo(() => {
+    if (selectedStatus === 'all') {
+      return listings;
+    }
+    return listings.filter(listing => listing.status === selectedStatus);
+  }, [listings, selectedStatus]);
+
+  // Если есть ошибка от хука, показываем её
+  useEffect(() => {
+    if (error && status === 'listings') {
+      setStatus('error');
+      setMessage('❌ Ошибка загрузки объявлений');
+    }
+  }, [error, status]);
+
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-      <div className="max-w-md w-full mx-auto px-4">
-        <div className="bg-white rounded-lg shadow-lg p-8 text-center">
-          {/* Логотип */}
-          <div className="mb-6">
-            <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-red-600 rounded-full flex items-center justify-center mx-auto">
-              <span className="text-white font-bold text-xl">DEZ</span>
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        {/* Заголовок */}
+        <div className="mb-8">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-600 rounded-full flex items-center justify-center">
+              <span className="text-white font-bold text-lg">AV</span>
             </div>
-            <h1 className="text-2xl font-bold text-gray-900 mt-4">DEZEXPERT</h1>
+            <h1 className="text-3xl font-bold text-gray-900">Объявления Avito</h1>
           </div>
+          <p className="text-gray-600">Управление вашими объявлениями на Avito</p>
+        </div>
 
-          {/* Статус */}
-          {status === 'loading' && (
-            <div className="space-y-4">
-              <LoadingSpinner size="lg" />
-              <p className="text-gray-600">{message}</p>
-              {isProcessing && (
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                  <p className="text-blue-800 text-sm">
-                    Подключение к Avito...
-                  </p>
-                </div>
-              )}
-            </div>
-          )}
-
-          {status === 'success' && (
-            <div className="space-y-4">
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto">
-                <CheckCircle className="w-8 h-8 text-green-600" />
-              </div>
-              <h2 className="text-xl font-semibold text-gray-900">
-                {message}
-              </h2>
-              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                <p className="text-green-800 text-sm">
-                  Через {countdown} секунд вы будете перенаправлены в дашборд
+        {/* Статус подключения */}
+        {status === 'loading' && (
+          <div className="bg-white rounded-lg shadow-lg p-8 text-center mb-8">
+            <LoadingSpinner size="lg" />
+            <p className="text-gray-600 mt-4">{message}</p>
+            {isProcessing && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-4">
+                <p className="text-blue-800 text-sm">
+                  Подключение к Avito...
                 </p>
               </div>
+            )}
+          </div>
+        )}
+
+        {status === 'success' && (
+          <div className="bg-white rounded-lg shadow-lg p-8 text-center mb-8">
+            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <CheckCircle className="w-8 h-8 text-green-600" />
+            </div>
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">
+              {message}
+            </h2>
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
+              <p className="text-green-800 text-sm">
+                Через {countdown} секунд вы будете перенаправлены в дашборд
+              </p>
+            </div>
+            <Button
+              onClick={handleRedirect}
+              className="bg-orange-600 hover:bg-orange-700 text-white"
+            >
+              <ArrowRight className="w-4 h-4 mr-2" />
+              Перейти в дашборд
+            </Button>
+          </div>
+        )}
+
+        {status === 'error' && (
+          <div className="bg-white rounded-lg shadow-lg p-8 text-center mb-8">
+            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <AlertCircle className="w-8 h-8 text-red-600" />
+            </div>
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">
+              {message}
+            </h2>
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+              <p className="text-red-800 text-sm">
+                Попробуйте подключиться заново
+              </p>
+            </div>
+            <div className="flex justify-center gap-3">
               <Button
-                onClick={handleRedirect}
+                onClick={handleRetry}
+                disabled={isProcessing}
                 className="bg-orange-600 hover:bg-orange-700 text-white"
               >
-                <ArrowRight className="w-4 h-4 mr-2" />
-                Перейти в дашборд
+                {isProcessing ? (
+                  <LoadingSpinner size="sm" className="mr-2" />
+                ) : (
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                )}
+                Попробовать снова
+              </Button>
+              <Button
+                onClick={handleRedirect}
+                variant="outline"
+                className="border-gray-300 text-gray-700 hover:bg-gray-50"
+              >
+                Вернуться в дашборд
               </Button>
             </div>
-          )}
+          </div>
+        )}
 
-          {status === 'error' && (
-            <div className="space-y-4">
-              <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto">
-                <AlertCircle className="w-8 h-8 text-red-600" />
+        {/* Список объявлений */}
+        {status === 'listings' && (
+          <div>
+            {/* Фильтры */}
+            <AvitoFilters
+              selectedStatus={selectedStatus}
+              onStatusChange={handleStatusChange}
+              totalCount={listings.length}
+              filteredCount={filteredListings.length}
+            />
+
+            {/* Загрузка */}
+            {loading && (
+              <div className="bg-white rounded-lg border p-8 text-center">
+                <LoadingSpinner size="lg" />
+                <p className="text-gray-600 mt-4">Загрузка объявлений...</p>
               </div>
-              <h2 className="text-xl font-semibold text-gray-900">
-                {message}
-              </h2>
-              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                <p className="text-red-800 text-sm">
-                  Попробуйте подключиться заново
+            )}
+
+            {/* Список объявлений */}
+            {!loading && filteredListings.length > 0 && (
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {filteredListings.map((listing) => (
+                    <AvitoListingCard key={listing.id} listing={listing} />
+                  ))}
+                </div>
+
+                {/* Пагинация */}
+                {pagination && pagination.total_pages > 1 && (
+                  <AvitoPagination
+                    pagination={pagination}
+                    onPageChange={handlePageChange}
+                  />
+                )}
+              </div>
+            )}
+
+            {/* Пустое состояние */}
+            {!loading && filteredListings.length === 0 && listings.length === 0 && (
+              <div className="bg-white rounded-lg border p-8 text-center">
+                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Package className="w-8 h-8 text-gray-400" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  Нет объявлений
+                </h3>
+                <p className="text-gray-600 mb-4">
+                  У вас пока нет объявлений на Avito или они не загрузились
                 </p>
-              </div>
-              <div className="flex space-x-3">
                 <Button
-                  onClick={handleRetry}
-                  disabled={isProcessing}
+                  onClick={() => getListings(currentPage)}
                   className="bg-orange-600 hover:bg-orange-700 text-white"
                 >
-                  {isProcessing ? (
-                    <LoadingSpinner size="sm" className="mr-2" />
-                  ) : (
-                    <RefreshCw className="w-4 h-4 mr-2" />
-                  )}
-                  Попробовать снова
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  Обновить
                 </Button>
+              </div>
+            )}
+
+            {/* Пустое состояние после фильтрации */}
+            {!loading && filteredListings.length === 0 && listings.length > 0 && (
+              <div className="bg-white rounded-lg border p-8 text-center">
+                <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <AlertTriangle className="w-8 h-8 text-yellow-600" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  Нет объявлений с выбранным статусом
+                </h3>
+                <p className="text-gray-600 mb-4">
+                  Попробуйте выбрать другой статус или сбросить фильтр
+                </p>
                 <Button
-                  onClick={handleRedirect}
+                  onClick={() => setSelectedStatus('all')}
                   variant="outline"
                   className="border-gray-300 text-gray-700 hover:bg-gray-50"
                 >
-                  Вернуться в дашборд
+                  Показать все
                 </Button>
               </div>
-            </div>
-          )}
-
-          {/* Дополнительная информация */}
-          <div className="mt-8 pt-6 border-t border-gray-200">
-            <p className="text-xs text-gray-500">
-              Если перенаправление не произошло автоматически, нажмите кнопку выше
-            </p>
+            )}
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

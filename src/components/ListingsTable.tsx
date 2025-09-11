@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { AvitoListing } from '@/hooks/useAvitoListings';
+import { AvitoListing } from '@/components/AvitoListingCard';
 import { LoadingSpinner } from './ui/loading-spinner';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -83,7 +83,7 @@ export function ListingsTable({ listings, loading, onRefresh }: ListingsTablePro
     .filter(listing => {
       const matchesSearch = listing.title.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesStatus = statusFilter === 'all' || listing.status.toLowerCase() === statusFilter;
-      const matchesCategory = categoryFilter === 'all' || listing.category.toLowerCase() === categoryFilter;
+      const matchesCategory = categoryFilter === 'all' || listing.category.name.toLowerCase() === categoryFilter;
       return matchesSearch && matchesStatus && matchesCategory;
     })
     .sort((a, b) => {
@@ -99,8 +99,8 @@ export function ListingsTable({ listings, loading, onRefresh }: ListingsTablePro
           bValue = b.price;
           break;
         case 'createdAt':
-          aValue = new Date(a.createdAt).getTime();
-          bValue = new Date(b.createdAt).getTime();
+          aValue = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+          bValue = b.createdAt ? new Date(b.createdAt).getTime() : 0;
           break;
         default:
           return 0;
@@ -132,7 +132,7 @@ export function ListingsTable({ listings, loading, onRefresh }: ListingsTablePro
     setCurrentPage(page);
   };
 
-  const uniqueCategories = [...new Set(listings.map(l => l.category))];
+  const uniqueCategories = [...new Set(listings.map(l => l.category.name))];
   const uniqueStatuses = [...new Set(listings.map(l => l.status))];
 
   if (loading && listings.length === 0) {
@@ -278,13 +278,13 @@ export function ListingsTable({ listings, loading, onRefresh }: ListingsTablePro
                             {listing.title}
                           </div>
                           <div className="text-sm text-gray-500">
-                            ID: {listing.avitoId}
+                            ID: {listing.id}
                           </div>
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{listing.category}</div>
+                      <div className="text-sm text-gray-900">{listing.category.name}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900">
@@ -312,7 +312,7 @@ export function ListingsTable({ listings, loading, onRefresh }: ListingsTablePro
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {formatDate(listing.createdAt)}
+                      {listing.createdAt ? formatDate(listing.createdAt) : '—'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <div className="flex items-center space-x-2">
@@ -341,7 +341,7 @@ export function ListingsTable({ listings, loading, onRefresh }: ListingsTablePro
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => window.open(`https://www.avito.ru/user/items/${listing.avitoId}`, '_blank')}
+                          onClick={() => window.open(`https://www.avito.ru/user/items/${listing.id}`, '_blank')}
                         >
                           <ExternalLink className="w-3 h-3" />
                         </Button>
