@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
-import { useAvitoContext } from '@/contexts/AvitoContext';
+import { useAvitoListings } from '@/hooks/useAvitoListings';
 import { toast } from 'sonner';
 import { ExternalLink, RefreshCw, CheckCircle, AlertCircle } from 'lucide-react';
 
@@ -12,7 +12,7 @@ interface AvitoConnectionProps {
 }
 
 export function AvitoConnection({ onConnected }: AvitoConnectionProps) {
-  const { getOAuthUrl, connectAccount, isConnecting, connectionStatus, error, clearError } = useAvitoContext();
+  const { getAvitoToken, getAvitoItems, setAccessToken, setListings, accessToken, error, clearError } = useAvitoListings();
   const [isConnectingToAvito, setIsConnectingToAvito] = useState(false);
 
   const handleConnect = async () => {
@@ -43,11 +43,7 @@ export function AvitoConnection({ onConnected }: AvitoConnectionProps) {
           window.removeEventListener('message', messageListener);
           
           // Подключаем аккаунт
-          connectAccount(code, state).then((success) => {
-            if (success && onConnected) {
-              onConnected();
-            }
-          });
+          handleOAuthCallback(code, state);
         } else if (event.data.type === 'AVITO_OAUTH_ERROR') {
           popup.close();
           window.removeEventListener('message', messageListener);
@@ -76,8 +72,32 @@ export function AvitoConnection({ onConnected }: AvitoConnectionProps) {
     }
   };
 
-  const isConnected = connectionStatus?.hasToken;
-  const isLoading = isConnecting || isConnectingToAvito;
+  const handleOAuthCallback = async (code: string, state?: string) => {
+    try {
+      // Получаем токен
+      const token = await getAvitoToken(code);
+      
+      // Получаем объявления с токеном
+      const items = await getAvitoItems(token, 1);
+      
+      // Устанавливаем токен и объявления
+      setAccessToken(token);
+      setListings(items);
+      
+      toast.success('Avito успешно подключен!');
+      
+      if (onConnected) {
+        onConnected();
+      }
+    } catch (error) {
+      console.error('Ошибка:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Неизвестная ошибка';
+      toast.error('Ошибка подключения к Avito: ' + errorMessage);
+    }
+  };
+
+  const isConnected = !!accessToken;
+  const isLoading = isConnectingToAvito;
 
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">

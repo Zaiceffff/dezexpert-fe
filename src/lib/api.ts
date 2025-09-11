@@ -301,6 +301,12 @@ class ApiClient {
   private cache = new Map<string, { data: unknown; timestamp: number; ttl: number }>();
 
   setToken(token: string, refreshToken?: string) {
+    // Базовая валидация токена
+    if (!token || typeof token !== 'string') {
+      console.error('Попытка сохранить пустой токен');
+      return;
+    }
+    
     this.token = token;
     if (typeof window !== 'undefined') {
       localStorage.setItem('auth_token', token);
@@ -312,38 +318,73 @@ class ApiClient {
     }
   }
 
+
   getToken(): string | null {
     if (!this.token && typeof window !== 'undefined') {
-      this.token = localStorage.getItem('auth_token');
-      // Если токен есть, но нет времени создания, устанавливаем текущее время
-      if (this.token && !localStorage.getItem('auth_token_created')) {
-        localStorage.setItem('auth_token_created', Date.now().toString());
+      const storedToken = localStorage.getItem('auth_token');
+      
+      // Базовая проверка токена
+      if (storedToken && typeof storedToken === 'string' && storedToken.length > 0) {
+        this.token = storedToken;
+        // Если токен есть, но нет времени создания, устанавливаем текущее время
+        if (!localStorage.getItem('auth_token_created')) {
+          localStorage.setItem('auth_token_created', Date.now().toString());
+        }
       }
     }
     return this.token;
   }
 
-  // Проверяем, не истек ли токен (7 дней = 7 * 24 * 60 * 60 * 1000 мс)
+  // Проверяем, не истек ли токен
   isTokenExpired(): boolean {
     if (typeof window === 'undefined') return false;
     
-    const tokenCreated = localStorage.getItem('auth_token_created');
-    if (!tokenCreated) {
-      // Если нет времени создания, но есть токен, считаем что токен валидный
-      // (это может быть старый токен без временной метки)
-      return false;
+    const token = this.getToken();
+    if (!token) return true;
+    
+    try {
+      // Проверяем, что токен имеет правильный формат JWT (3 части, разделенные точками)
+      const parts = token.split('.');
+      if (parts.length !== 3) {
+        console.warn('Токен не имеет правильного формата JWT');
+        return true;
+      }
+      
+      // Декодируем JWT токен для получения времени истечения
+      // Используем более безопасный способ декодирования base64
+      const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+      const payload = JSON.parse(atob(base64));
+      const now = Math.floor(Date.now() / 1000); // Текущее время в секундах
+      
+      // Проверяем, не истек ли токен (с запасом в 5 минут)
+      return payload.exp && (payload.exp - 300) < now;
+    } catch (error) {
+      console.error('Ошибка декодирования токена:', error);
+      // Если не можем декодировать, считаем токен недействительным
+      return true;
     }
-    
-    const createdTime = parseInt(tokenCreated);
-    const now = Date.now();
-    const tokenLifetime = 7 * 24 * 60 * 60 * 1000; // 7 дней в миллисекундах
-    
-    return (now - createdTime) > tokenLifetime;
   }
+
+  // Флаг для предотвращения множественных одновременных обновлений токена
+  private isRefreshing = false;
+  private lastRefreshAttempt = 0;
 
   // Автоматическое обновление токена при приближении к истечению
   async autoRefreshTokenIfNeeded(): Promise<boolean> {
     if (typeof window === 'undefined') return false;
+    
+    // Предотвращаем множественные одновременные обновления
+    if (this.isRefreshing) {
+      console.log('Обновление токена уже в процессе...');
+      return false;
+    }
+    
+    // Предотвращаем слишком частые попытки обновления (минимум 5 минут между попытками)
+    const now = Date.now();
+    if (now - this.lastRefreshAttempt < 5 * 60 * 1000) {
+      console.log('Слишком рано для повторного обновления токена');
+      return false;
+    }
     
     const refreshToken = localStorage.getItem('refresh_token');
     if (!refreshToken) return false;
@@ -351,6 +392,8 @@ class ApiClient {
     // Если токен скоро истечет, обновляем его
     if (this.isTokenExpiringSoon()) {
       try {
+        this.isRefreshing = true;
+        this.lastRefreshAttempt = now;
         console.log('Токен скоро истечет, обновляем автоматически...');
         const response = await this.refreshToken(refreshToken);
         this.setToken(response.accessToken, refreshToken);
@@ -358,6 +401,8 @@ class ApiClient {
       } catch (error) {
         console.error('Ошибка автоматического обновления токена:', error);
         return false;
+      } finally {
+        this.isRefreshing = false;
       }
     }
     
@@ -368,31 +413,54 @@ class ApiClient {
   isTokenExpiringSoon(): boolean {
     if (typeof window === 'undefined') return false;
     
-    const tokenCreated = localStorage.getItem('auth_token_created');
-    if (!tokenCreated) {
-      // Если нет времени создания, считаем что токен не истекает скоро
+    const token = this.getToken();
+    if (!token) return false;
+    
+    try {
+      // Проверяем, что токен имеет правильный формат JWT (3 части, разделенные точками)
+      const parts = token.split('.');
+      if (parts.length !== 3) {
+        console.warn('Токен не имеет правильного формата JWT для проверки истечения');
+        return false;
+      }
+      
+      // Декодируем JWT токен для получения времени истечения
+      // Используем более безопасный способ декодирования base64
+      const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+      const payload = JSON.parse(atob(base64));
+      const now = Math.floor(Date.now() / 1000); // Текущее время в секундах
+      const oneHour = 60 * 60; // 1 час в секундах
+      
+      // Проверяем, истекает ли токен в течение часа
+      return payload.exp && (payload.exp - oneHour) < now;
+    } catch (error) {
+      console.error('Ошибка декодирования токена для проверки истечения:', error);
       return false;
     }
-    
-    const createdTime = parseInt(tokenCreated);
-    const now = Date.now();
-    const tokenLifetime = 7 * 24 * 60 * 60 * 1000; // 7 дней в миллисекундах
-    const warningTime = 60 * 60 * 1000; // 1 час в миллисекундах
-    
-    return (now - createdTime) > (tokenLifetime - warningTime);
   }
 
   // Получаем время истечения токена
   getTokenExpirationTime(): Date | null {
     if (typeof window === 'undefined') return null;
     
-    const tokenCreated = localStorage.getItem('auth_token_created');
-    if (!tokenCreated) return null;
+    const token = this.getToken();
+    if (!token) return null;
     
-    const createdTime = parseInt(tokenCreated);
-    const tokenLifetime = 7 * 24 * 60 * 60 * 1000; // 7 дней в миллисекундах
+    try {
+      const parts = token.split('.');
+      if (parts.length !== 3) return null;
+      
+      const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+      const payload = JSON.parse(atob(base64));
+      
+      if (payload.exp) {
+        return new Date(payload.exp * 1000); // Конвертируем из секунд в миллисекунды
+      }
+    } catch (error) {
+      console.error('Ошибка получения времени истечения токена:', error);
+    }
     
-    return new Date(createdTime + tokenLifetime);
+    return null;
   }
 
   clearToken() {
@@ -423,8 +491,12 @@ class ApiClient {
     // Пытаемся автоматически обновить токен, если он скоро истечет
     if (token && this.isTokenExpiringSoon()) {
       try {
-        await this.autoRefreshTokenIfNeeded();
-        token = this.getToken(); // Получаем обновленный токен
+        console.log('Токен скоро истечет, пытаемся обновить...');
+        const refreshed = await this.autoRefreshTokenIfNeeded();
+        if (refreshed) {
+          token = this.getToken(); // Получаем обновленный токен
+          console.log('Токен успешно обновлен');
+        }
       } catch (error) {
         console.warn('Не удалось автоматически обновить токен:', error);
       }

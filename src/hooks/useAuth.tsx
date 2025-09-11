@@ -29,17 +29,31 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [hasInitialized, setHasInitialized] = useState(false);
 
   useEffect(() => {
+    // Предотвращаем повторную инициализацию
+    if (hasInitialized) return;
+    
     // Проверяем токен при загрузке приложения
     const checkAuth = async () => {
       try {
+        setHasInitialized(true);
         const token = apiClient.getToken();
         
         if (token) {
+          // Проверяем, не истек ли токен перед запросом
+          if (apiClient.isTokenExpired()) {
+            console.warn('Токен истек при инициализации, очищаем его');
+            apiClient.clearToken();
+            setUser(null);
+            setIsLoading(false);
+            return;
+          }
+
           // Сначала пытаемся получить профиль пользователя
           try {
-            const response = await fetch('/user/profile', {
+            const response = await fetch('/api/user/profile', {
               headers: {
                 'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
@@ -55,8 +69,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               apiClient.clearToken();
               setUser(null);
             } else {
-              // Другие ошибки - не очищаем токен
+              // Другие ошибки - не очищаем токен, но логируем
               console.error('Ошибка загрузки профиля:', response.status);
+              // Не разлогиниваем пользователя при других ошибках
             }
           } catch (profileError) {
             console.error('Ошибка загрузки профиля:', profileError);
@@ -71,7 +86,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
 
     checkAuth();
-  }, []);
+  }, [hasInitialized]);
 
   const refreshToken = async () => {
     try {
@@ -85,7 +100,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       // Обновляем пользователя
       try {
-        const profileResponse = await fetch('/user/profile', {
+        const profileResponse = await fetch('/api/user/profile', {
           headers: {
             'Authorization': `Bearer ${response.accessToken}`,
             'Content-Type': 'application/json'
@@ -147,10 +162,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const refreshUser = async () => {
     try {
-      // TODO: Получить данные пользователя из API
-      // setUser(userData);
+      const token = apiClient.getToken();
+      if (!token) {
+        setUser(null);
+        return;
+      }
+
+      const response = await fetch('/api/user/profile', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (response.ok) {
+        const userData = await response.json();
+        setUser(userData);
+        // Очищаем кэш профиля при успешном обновлении
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('user_profile_cache');
+          localStorage.removeItem('user_profile_timestamp');
+        }
+      } else if (response.status === 401) {
+        // Если получили 401, токен недействителен
+        console.warn('Токен недействителен при обновлении пользователя, очищаем его');
+        apiClient.clearToken();
+        setUser(null);
+      } else {
+        console.error('Ошибка обновления профиля:', response.status);
+      }
     } catch (error) {
-      logout();
+      console.error('Ошибка обновления пользователя:', error);
+      // Не разлогиниваем при сетевых ошибках
     }
   };
 

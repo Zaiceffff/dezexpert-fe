@@ -1,10 +1,12 @@
 'use client';
 
+import { Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { AlertCircle, ArrowLeft, RefreshCw } from 'lucide-react';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
-export default function AvitoErrorPage() {
+function AvitoErrorContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   
@@ -91,5 +93,17 @@ export default function AvitoErrorPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function AvitoErrorPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <LoadingSpinner size="lg" />
+      </div>
+    }>
+      <AvitoErrorContent />
+    </Suspense>
   );
 }

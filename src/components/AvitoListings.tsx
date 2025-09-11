@@ -1,10 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
-import { useAvitoContext } from '@/contexts/AvitoContext';
-import type { AvitoListing } from '@/lib/avito-types';
+import { useAvitoListings } from '@/hooks/useAvitoListings';
+import { AvitoFilters, AvitoStatus } from '@/components/AvitoFilters';
+import { AvitoPagination } from '@/components/AvitoPagination';
+import type { AvitoListing } from '@/components/AvitoListingCard';
 import { 
   RefreshCw, 
   Bot, 
@@ -24,36 +26,57 @@ interface AvitoListingsProps {
 export function AvitoListings({ onListingUpdate }: AvitoListingsProps) {
   const { 
     listings, 
-    syncListings, 
-    toggleAiAssistant, 
-    isSyncing, 
-    isLoading, 
-    stats,
+    pagination,
+    getListings, 
+    getAvitoToken,
+    getAvitoItems,
+    accessToken,
+    setAccessToken,
+    loading, 
     error,
     clearError 
-  } = useAvitoContext();
+  } = useAvitoListings();
 
-  
-  const [syncingListingId, setSyncingListingId] = useState<string | null>(null);
+  const [syncingListingId, setSyncingListingId] = useState<number | null>(null);
+  const [selectedStatus, setSelectedStatus] = useState<AvitoStatus | 'all'>('all');
+  const [currentPage, setCurrentPage] = useState(1);
 
   const handleSync = async () => {
-    const success = await syncListings(true);
-    if (success) {
-      // Обновляем статистику после синхронизации
+    if (accessToken) {
+      await getListings(1);
     }
   };
 
   const handleToggleAi = async (listing: AvitoListing) => {
     setSyncingListingId(listing.id);
     try {
-      const success = await toggleAiAssistant(listing.id, !listing.aiAssistantIsOn);
-      if (success && onListingUpdate) {
-        onListingUpdate(listing);
-      }
+      // TODO: Реализовать переключение ИИ ассистента
+      // const success = await toggleAiAssistant(listing.id, !listing.aiAssistantIsOn);
+      // if (success && onListingUpdate) {
+      //   onListingUpdate(listing);
+      // }
+      console.log('Toggle AI for listing:', listing.id);
     } finally {
       setSyncingListingId(null);
     }
   };
+
+  const handleStatusChange = (status: AvitoStatus | 'all') => {
+    setSelectedStatus(status);
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    getListings(page);
+  };
+
+  // Фильтрация объявлений
+  const filteredListings = useMemo(() => {
+    if (selectedStatus === 'all') {
+      return listings;
+    }
+    return listings.filter(listing => listing.status === selectedStatus);
+  }, [listings, selectedStatus]);
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('ru-RU', {
@@ -97,7 +120,7 @@ export function AvitoListings({ onListingUpdate }: AvitoListingsProps) {
     }
   };
 
-  if (isLoading && listings.length === 0) {
+  if (loading && listings.length === 0) {
     return (
       <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">
         <LoadingSpinner size="lg" />
@@ -125,11 +148,11 @@ export function AvitoListings({ onListingUpdate }: AvitoListingsProps) {
           
           <Button
             onClick={handleSync}
-            disabled={isSyncing}
+            disabled={loading}
             variant="outline"
             className="border-orange-300 text-orange-700 hover:bg-orange-50"
           >
-            {isSyncing ? (
+            {loading ? (
               <>
                 <LoadingSpinner size="sm" className="mr-2" />
                 Синхронизация...
@@ -144,33 +167,35 @@ export function AvitoListings({ onListingUpdate }: AvitoListingsProps) {
         </div>
 
         {/* Статистика */}
-        {stats && (
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-            <div className="bg-gray-50 rounded-lg p-4">
-              <div className="flex items-center space-x-2">
-                <Tag className="w-4 h-4 text-gray-600" />
-                <span className="text-sm font-medium text-gray-600">Всего объявлений</span>
-              </div>
-              <p className="text-2xl font-bold text-gray-900 mt-1">{stats.totalListings}</p>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+          <div className="bg-gray-50 rounded-lg p-4">
+            <div className="flex items-center space-x-2">
+              <Tag className="w-4 h-4 text-gray-600" />
+              <span className="text-sm font-medium text-gray-600">Всего объявлений</span>
             </div>
-            
-            <div className="bg-green-50 rounded-lg p-4">
-              <div className="flex items-center space-x-2">
-                <Bot className="w-4 h-4 text-green-600" />
-                <span className="text-sm font-medium text-green-600">ИИ активен</span>
-              </div>
-              <p className="text-2xl font-bold text-green-900 mt-1">{stats.activeAiListings}</p>
-            </div>
-            
-            <div className="bg-blue-50 rounded-lg p-4">
-              <div className="flex items-center space-x-2">
-                <ExternalLink className="w-4 h-4 text-blue-600" />
-                <span className="text-sm font-medium text-blue-600">Диалогов</span>
-              </div>
-              <p className="text-2xl font-bold text-blue-900 mt-1">{stats.totalConversations}</p>
-            </div>
+            <p className="text-2xl font-bold text-gray-900 mt-1">{listings.length}</p>
           </div>
-        )}
+          
+          <div className="bg-green-50 rounded-lg p-4">
+            <div className="flex items-center space-x-2">
+              <Bot className="w-4 h-4 text-green-600" />
+              <span className="text-sm font-medium text-green-600">ИИ активен</span>
+            </div>
+            <p className="text-2xl font-bold text-green-900 mt-1">
+              {listings.filter(l => l.aiAssistantIsOn).length}
+            </p>
+          </div>
+          
+          <div className="bg-blue-50 rounded-lg p-4">
+            <div className="flex items-center space-x-2">
+              <ExternalLink className="w-4 h-4 text-blue-600" />
+              <span className="text-sm font-medium text-blue-600">Активных</span>
+            </div>
+            <p className="text-2xl font-bold text-blue-900 mt-1">
+              {listings.filter(l => l.status === 'active').length}
+            </p>
+          </div>
+        </div>
 
         {error && (
           <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
@@ -181,6 +206,14 @@ export function AvitoListings({ onListingUpdate }: AvitoListingsProps) {
           </div>
         )}
       </div>
+
+      {/* Фильтры */}
+      <AvitoFilters
+        selectedStatus={selectedStatus}
+        onStatusChange={handleStatusChange}
+        totalCount={listings.length}
+        filteredCount={filteredListings.length}
+      />
 
       {/* Список объявлений */}
       {listings.length > 0 ? (
@@ -193,7 +226,7 @@ export function AvitoListings({ onListingUpdate }: AvitoListingsProps) {
           </div>
           
           <div className="divide-y divide-gray-200">
-            {listings.map((listing) => (
+            {filteredListings.map((listing) => (
               <div key={listing.id} className="p-6 hover:bg-gray-50 transition-colors">
                 <div className="flex items-start justify-between">
                   <div className="flex-1 min-w-0">
@@ -209,7 +242,7 @@ export function AvitoListings({ onListingUpdate }: AvitoListingsProps) {
                     <div className="flex items-center space-x-4 text-sm text-gray-600 mb-3">
                       <div className="flex items-center space-x-1">
                         <Tag className="w-4 h-4" />
-                        <span>{listing.category}</span>
+                        <span>{listing.category?.name || 'Не указано'}</span>
                       </div>
                       <div className="flex items-center space-x-1">
                         <DollarSign className="w-4 h-4" />
@@ -217,7 +250,7 @@ export function AvitoListings({ onListingUpdate }: AvitoListingsProps) {
                       </div>
                       <div className="flex items-center space-x-1">
                         <Calendar className="w-4 h-4" />
-                        <span>{formatDate(listing.createdAt)}</span>
+                        <span>{listing.createdAt ? formatDate(listing.createdAt) : 'Не указано'}</span>
                       </div>
                     </div>
                     
@@ -265,7 +298,7 @@ export function AvitoListings({ onListingUpdate }: AvitoListingsProps) {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => window.open(`https://www.avito.ru/user/items/${listing.avitoId}`, '_blank')}
+                      onClick={() => window.open(listing.url || `https://www.avito.ru/user/items/${listing.id}`, '_blank')}
                     >
                       <ExternalLink className="w-4 h-4" />
                     </Button>
@@ -274,6 +307,16 @@ export function AvitoListings({ onListingUpdate }: AvitoListingsProps) {
               </div>
             ))}
           </div>
+
+          {/* Пагинация */}
+          {pagination && pagination.total_pages > 1 && (
+            <div className="p-6 border-t border-gray-200">
+              <AvitoPagination
+                pagination={pagination}
+                onPageChange={handlePageChange}
+              />
+            </div>
+          )}
         </div>
       ) : (
         <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">
@@ -286,10 +329,10 @@ export function AvitoListings({ onListingUpdate }: AvitoListingsProps) {
           </p>
           <Button
             onClick={handleSync}
-            disabled={isSyncing}
+            disabled={loading}
             className="bg-orange-600 hover:bg-orange-700 text-white"
           >
-            {isSyncing ? (
+            {loading ? (
               <>
                 <LoadingSpinner size="sm" className="mr-2" />
                 Синхронизация...
@@ -300,6 +343,28 @@ export function AvitoListings({ onListingUpdate }: AvitoListingsProps) {
                 Синхронизировать объявления
               </>
             )}
+          </Button>
+        </div>
+      )}
+
+      {/* Пустое состояние после фильтрации */}
+      {listings.length > 0 && filteredListings.length === 0 && (
+        <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">
+          <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <AlertCircle className="w-8 h-8 text-yellow-600" />
+          </div>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">
+            Нет объявлений с выбранным статусом
+          </h3>
+          <p className="text-gray-600 mb-4">
+            Попробуйте выбрать другой статус или сбросить фильтр
+          </p>
+          <Button
+            onClick={() => setSelectedStatus('all')}
+            variant="outline"
+            className="border-gray-300 text-gray-700 hover:bg-gray-50"
+          >
+            Показать все
           </Button>
         </div>
       )}

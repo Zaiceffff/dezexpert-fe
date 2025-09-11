@@ -29,6 +29,7 @@ import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Pagination } from '@/components/ui/pagination';
 import { updateUserPrices, getDefaultPrices, forceRefreshPrices } from '@/lib/pricingApi';
 import { useOrdersState } from '@/hooks/useOrders';
+import { useAvitoListings } from '@/hooks/useAvitoListings';
 
 import { getApiUrl } from '@/lib/config';
 import { getServiceText } from '@/lib/translations';
@@ -50,6 +51,13 @@ export default function DashboardPage() {
     setPageSize: setPageSizeFromHook,
     isLoading: isLoadingFromHook
   } = useOrdersState();
+
+  // Используем хук useAvitoListings для работы с Avito
+  const { 
+    accessToken: avitoToken,
+    setAccessToken: setAvitoToken,
+    getListings: getAvitoListings
+  } = useAvitoListings();
 
   const [activeTab, setActiveTab] = useState('leads');
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
@@ -362,7 +370,19 @@ export default function DashboardPage() {
     };
     
     syncAuth();
-  }, [refreshUser]);
+
+    // Инициализируем Avito токен из localStorage
+    const initAvitoToken = () => {
+      const savedToken = localStorage.getItem('avito_token');
+      if (savedToken) {
+        setAvitoToken(savedToken);
+        // Загружаем объявления если есть токен
+        getAvitoListings(1);
+      }
+    };
+    
+    initAvitoToken();
+  }, [setAvitoToken, getAvitoListings]);
 
   // Сбрасываем пагинацию при изменении поиска
   useEffect(() => {
@@ -707,11 +727,15 @@ export default function DashboardPage() {
 
   const handleAvitoConnected = () => {
     setAvitoConnected(true);
+    // Перезагружаем объявления после подключения
+    getAvitoListings(1);
   };
 
   const handleAvitoListingUpdate = (listing: any) => {
     // Обновляем статистику или выполняем другие действия
     console.log('Avito listing updated:', listing);
+    // Перезагружаем объявления после обновления
+    getAvitoListings(1);
   };
 
   const getStatusDot = (status: string) => {

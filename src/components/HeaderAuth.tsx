@@ -9,7 +9,7 @@ import { Menu, X, BarChart3, LogOut, Settings } from 'lucide-react';
 import { track } from '@/lib/analytics';
 
 export default function HeaderAuth({ utm = '' }: { utm?: string }) {
-  const { user, logout } = useAuth();
+  const { user, logout, isLoading } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const handleLogout = () => {
@@ -21,6 +21,16 @@ export default function HeaderAuth({ utm = '' }: { utm?: string }) {
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
   };
+
+  // Показываем состояние загрузки
+  if (isLoading) {
+    return (
+      <div className="flex items-center space-x-2">
+        <div className="w-8 h-8 bg-gray-100 rounded-full animate-pulse"></div>
+        <div className="w-20 h-4 bg-gray-100 rounded animate-pulse"></div>
+      </div>
+    );
+  }
 
   if (user) {
     return (

@@ -1,12 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Button } from '@/components/ui/button';
 import { CheckCircle, ArrowRight, AlertCircle } from 'lucide-react';
 
-export default function AvitoSuccessPage() {
+function AvitoSuccessContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [countdown, setCountdown] = useState(5);
@@ -95,5 +95,17 @@ export default function AvitoSuccessPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function AvitoSuccessPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <LoadingSpinner size="lg" />
+      </div>
+    }>
+      <AvitoSuccessContent />
+    </Suspense>
   );
 }

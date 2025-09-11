@@ -1,7 +1,7 @@
 // src/app/payment_v2/page.tsx — страница тарифов Dezexpert
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -147,7 +147,7 @@ const TARIFF_PLANS: Plan[] = [
 
 
 
-export default function PaymentPage() {
+function PaymentPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   
@@ -590,4 +590,17 @@ export default function PaymentPage() {
   );
 }
 
-
+export default function PaymentPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Загрузка...</p>
+        </div>
+      </div>
+    }>
+      <PaymentPageContent />
+    </Suspense>
+  );
+}
