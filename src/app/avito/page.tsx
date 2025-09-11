@@ -29,6 +29,10 @@ function AvitoCallbackContent() {
     accessToken,
     getToken,
     getListings,
+    getAvitoToken,
+    getAvitoItems,
+    setAccessToken,
+    setListings,
     clearError,
   } = useAvitoListings();
 
@@ -68,28 +72,29 @@ function AvitoCallbackContent() {
       setMessage('Подключение к Avito...');
 
       // Получаем токен
-      const tokenSuccess = await getToken(code);
+      const token = await getAvitoToken(code);
       
-      if (tokenSuccess) {
-        setStatus('success');
-        setMessage('✅ Avito успешно подключен');
-        toast.success('Avito успешно подключен!');
-        
-        // Получаем объявления
-        await getListings(1);
-        setStatus('listings');
-        
-        // Запускаем обратный отсчет для редиректа
-        startCountdown();
-      } else {
-        setStatus('error');
-        setMessage('❌ Ошибка подключения');
-      }
+      // Получаем объявления с токеном
+      const items = await getAvitoItems(token, 1);
+      
+      setStatus('success');
+      setMessage('✅ Avito успешно подключен');
+      toast.success('Avito успешно подключен!');
+      
+      // Устанавливаем токен и объявления
+      setAccessToken(token);
+      setListings(items);
+      setStatus('listings');
+      
+      // Запускаем обратный отсчет для редиректа
+      startCountdown();
     } catch (error) {
-      console.error('OAuth Callback Error:', error);
+      console.error('Ошибка:', error);
       setStatus('error');
       setMessage('❌ Ошибка подключения');
-      toast.error('Ошибка подключения к Avito');
+      // Показать пользователю сообщение об ошибке
+      const errorMessage = error instanceof Error ? error.message : 'Неизвестная ошибка';
+      toast.error('Ошибка подключения к Avito: ' + errorMessage);
     } finally {
       setIsProcessing(false);
     }

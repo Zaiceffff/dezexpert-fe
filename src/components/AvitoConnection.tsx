@@ -68,6 +68,9 @@ export function AvitoConnection({ onConnected }: AvitoConnectionProps) {
 
     } catch (error) {
       console.error('Ошибка подключения к Avito:', error);
+      // Показать пользователю сообщение об ошибке
+      const errorMessage = error instanceof Error ? error.message : 'Неизвестная ошибка';
+      toast.error('Ошибка подключения к Avito: ' + errorMessage);
     } finally {
       setIsConnectingToAvito(false);
     }
