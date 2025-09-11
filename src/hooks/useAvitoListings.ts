@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { toast } from 'sonner';
 import { AvitoListing } from '@/components/AvitoListingCard';
 
@@ -93,13 +93,22 @@ export function useAvitoListings(): UseAvitoListingsReturn {
     }
   }, []);
 
+  const setAccessTokenWithPersistence = useCallback((token: string | null) => {
+    setAccessToken(token);
+    if (token) {
+      localStorage.setItem('avito_token', token);
+    } else {
+      localStorage.removeItem('avito_token');
+    }
+  }, []);
+
   const getToken = useCallback(async (code: string): Promise<boolean> => {
     try {
       setLoading(true);
       setError(null);
 
       const token = await getAvitoToken(code);
-      setAccessToken(token);
+      setAccessTokenWithPersistence(token);
       toast.success('Токен успешно получен');
       return true;
     } catch (error) {
@@ -108,7 +117,7 @@ export function useAvitoListings(): UseAvitoListingsReturn {
     } finally {
       setLoading(false);
     }
-  }, [getAvitoToken, handleError]);
+  }, [getAvitoToken, handleError, setAccessTokenWithPersistence]);
 
   const getAvitoItems = useCallback(async (token: string, page: number = 1): Promise<AvitoListing[]> => {
     try {
@@ -155,6 +164,14 @@ export function useAvitoListings(): UseAvitoListingsReturn {
     }
   }, []);
 
+  // Инициализация токена из localStorage при загрузке
+  useEffect(() => {
+    const savedToken = localStorage.getItem('avito_token');
+    if (savedToken) {
+      setAccessToken(savedToken);
+    }
+  }, []);
+
   const getListings = useCallback(async (page: number = 1): Promise<void> => {
     if (!accessToken) {
       setError('Токен не найден. Необходимо авторизоваться');
@@ -171,7 +188,7 @@ export function useAvitoListings(): UseAvitoListingsReturn {
       const errorMessage = error instanceof Error ? error.message : 'Неизвестная ошибка';
       
       if (errorMessage.includes('Токен истек')) {
-        setAccessToken(null);
+        setAccessTokenWithPersistence(null);
         setError('Сессия истекла. Необходимо повторно авторизоваться');
       } else if (errorMessage.includes('Доступ запрещен')) {
         setError('Доступ запрещен. Обратитесь к администратору');
@@ -184,7 +201,7 @@ export function useAvitoListings(): UseAvitoListingsReturn {
     } finally {
       setLoading(false);
     }
-  }, [accessToken, getAvitoItems, handleError]);
+  }, [accessToken, getAvitoItems, handleError, setAccessTokenWithPersistence]);
 
   return {
     listings,
@@ -196,7 +213,7 @@ export function useAvitoListings(): UseAvitoListingsReturn {
     getListings,
     getAvitoToken,
     getAvitoItems,
-    setAccessToken,
+    setAccessToken: setAccessTokenWithPersistence,
     setListings,
     clearError,
   };
