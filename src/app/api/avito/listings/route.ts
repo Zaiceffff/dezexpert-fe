@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Проверяем, запущен ли Avito бэкенд
-    const avitoBackendUrl = process.env.AVITO_BACKEND_URL || 'http://144.124.230.138:3005';
+    const avitoBackendUrl = process.env.AVITO_BACKEND_URL || 'https://v467850.hosted-by-vdsina.com/api/docs';
     
     try {
       // Пробуем подключиться к Avito бэкенду
@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
 
     // Проверяем, запущен ли Avito бэкенд
-    const avitoBackendUrl = process.env.AVITO_BACKEND_URL || 'http://144.124.230.138:3005';
+    const avitoBackendUrl = process.env.AVITO_BACKEND_URL || 'https://v467850.hosted-by-vdsina.com/api/docs';
     
     try {
       // Пробуем подключиться к Avito бэкенду

@@ -1,13 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Button } from '@/components/ui/button';
 import { CheckCircle, ArrowRight, AlertCircle, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 
-export default function AvitoCallbackPage() {
+function AvitoCallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
@@ -19,6 +19,8 @@ export default function AvitoCallbackPage() {
     const code = searchParams.get('code');
     const state = searchParams.get('state');
     const error = searchParams.get('error');
+
+    console.log('OAuth Callback received:', { code, state, error });
 
     if (error) {
       setStatus('error');
@@ -40,40 +42,82 @@ export default function AvitoCallbackPage() {
     try {
       setIsProcessing(true);
       setStatus('loading');
-      setMessage('Обработка авторизации...');
+      setMessage('Подключение к Avito...');
 
-      // Вызываем API для обработки OAuth callback
+      // Вызываем API для получения токена
       const params = new URLSearchParams({ code });
       if (state) params.append('state', state);
 
-      const response = await fetch(`${process.env.AVITO_BACKEND_URL || 'http://144.124.230.138:3005'}/api/avito/oauth/callback/public?${params}`, {
+      const backendUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://v467850.hosted-by-vdsina.com';
+      const apiUrl = `${backendUrl}/api/avito/oauth/callback/public?${params}`;
+      
+      console.log('Environment variables:');
+      console.log('NEXT_PUBLIC_API_BASE_URL:', process.env.NEXT_PUBLIC_API_BASE_URL);
+      console.log('Backend URL:', backendUrl);
+      console.log('Code:', code);
+      console.log('State:', state);
+      console.log('Making request to:', apiUrl);
+
+      const response = await fetch(apiUrl, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
         },
       });
 
+      console.log('Response status:', response.status);
+      console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+
+      const responseText = await response.text();
+      console.log('Response text:', responseText);
+
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Ошибка обработки авторизации');
+        console.error('Error response:', responseText);
+        throw new Error(`Ошибка подключения к Avito (${response.status})`);
       }
 
-      const data = await response.json();
+      // Проверяем, является ли ответ HTML (ошибка) или JSON (успех)
+      if (responseText.includes('<html>')) {
+        // Это HTML страница с ошибкой
+        if (responseText.includes('❌ Ошибка подключения')) {
+          throw new Error('Ошибка подключения к Avito: не удалось получить токен');
+        } else if (responseText.includes('✅ Подключение успешно')) {
+          // Это успешный HTML ответ
+          setStatus('success');
+          setMessage('✅ Avito успешно подключен');
+          toast.success('Avito успешно подключен!');
+          
+          // Запускаем обратный отсчет
+          startCountdown();
+          return;
+        } else {
+          throw new Error('Неожиданный ответ от сервера');
+        }
+      }
+
+      // Пытаемся распарсить JSON
+      let data;
+      try {
+        data = JSON.parse(responseText);
+        console.log('Response data:', data);
+      } catch {
+        throw new Error('Не удалось обработать ответ сервера');
+      }
       
-      if (data.success) {
+      if (data.success || data.access_token) {
         setStatus('success');
-        setMessage('Вы успешно авторизовались с Avito!');
-        toast.success('Аккаунт Avito успешно подключен!');
+        setMessage('✅ Avito успешно подключен');
+        toast.success('Avito успешно подключен!');
         
         // Запускаем обратный отсчет
         startCountdown();
       } else {
-        throw new Error('Не удалось обработать авторизацию');
+        throw new Error('Не удалось подключиться к Avito');
       }
     } catch (error) {
       console.error('OAuth Callback Error:', error);
       setStatus('error');
-      setMessage(error instanceof Error ? error.message : 'Ошибка авторизации');
+      setMessage('❌ Ошибка подключения');
       toast.error('Ошибка подключения к Avito');
     } finally {
       setIsProcessing(false);
@@ -85,7 +129,7 @@ export default function AvitoCallbackPage() {
       setCountdown((prev) => {
         if (prev <= 1) {
           clearInterval(timer);
-          router.push('/app/avito');
+          window.location.href = '/dashboard';
           return 0;
         }
         return prev - 1;
@@ -94,7 +138,7 @@ export default function AvitoCallbackPage() {
   };
 
   const handleRedirect = () => {
-    router.push('/app/avito');
+    window.location.href = '/dashboard';
   };
 
   const handleRetry = () => {
@@ -138,11 +182,8 @@ export default function AvitoCallbackPage() {
                 <CheckCircle className="w-8 h-8 text-green-600" />
               </div>
               <h2 className="text-xl font-semibold text-gray-900">
-                Авторизация успешна!
-              </h2>
-              <p className="text-gray-600">
                 {message}
-              </p>
+              </h2>
               <div className="bg-green-50 border border-green-200 rounded-lg p-4">
                 <p className="text-green-800 text-sm">
                   Через {countdown} секунд вы будете перенаправлены в дашборд
@@ -164,14 +205,11 @@ export default function AvitoCallbackPage() {
                 <AlertCircle className="w-8 h-8 text-red-600" />
               </div>
               <h2 className="text-xl font-semibold text-gray-900">
-                Ошибка авторизации
-              </h2>
-              <p className="text-gray-600">
                 {message}
-              </p>
+              </h2>
               <div className="bg-red-50 border border-red-200 rounded-lg p-4">
                 <p className="text-red-800 text-sm">
-                  Попробуйте авторизоваться заново
+                  Попробуйте подключиться заново
                 </p>
               </div>
               <div className="flex space-x-3">
@@ -188,7 +226,7 @@ export default function AvitoCallbackPage() {
                   Попробовать снова
                 </Button>
                 <Button
-                  onClick={() => router.push('/app/avito')}
+                  onClick={handleRedirect}
                   variant="outline"
                   className="border-gray-300 text-gray-700 hover:bg-gray-50"
                 >
@@ -207,5 +245,22 @@ export default function AvitoCallbackPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function AvitoCallbackPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="max-w-md w-full mx-auto px-4">
+          <div className="bg-white rounded-lg shadow-lg p-8 text-center">
+            <LoadingSpinner size="lg" />
+            <p className="text-gray-600 mt-4">Загрузка...</p>
+          </div>
+        </div>
+      </div>
+    }>
+      <AvitoCallbackContent />
+    </Suspense>
   );
 }

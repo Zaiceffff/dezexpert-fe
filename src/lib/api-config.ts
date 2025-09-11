@@ -5,7 +5,7 @@ export const API_CONFIG = {
   RETRY_ATTEMPTS: parseInt(process.env.NEXT_PUBLIC_API_RETRY_ATTEMPTS || '3'),
   RETRY_DELAY: parseInt(process.env.NEXT_PUBLIC_API_RETRY_DELAY || '1000'),
   // Avito OAuth configuration
-  AVITO_OAUTH_REDIRECT_URI: process.env.NEXT_PUBLIC_AVITO_OAUTH_REDIRECT_URI || 'http://144.124.230.138:3005/api/avito/oauth/callback',
+  AVITO_OAUTH_REDIRECT_URI: process.env.NEXT_PUBLIC_AVITO_OAUTH_REDIRECT_URI || 'https://v467850.hosted-by-vdsina.com/api/docs/api/avito/oauth/callback',
 } as const;
 
 // API Endpoints

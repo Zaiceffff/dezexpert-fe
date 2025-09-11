@@ -24,12 +24,15 @@ export function OAuthButton({ oauthUrl, onSuccess, isConnected }: OAuthButtonPro
   const handleConnect = async () => {
     try {
       setIsConnecting(true);
-      await initiateOAuth();
+      
+      // Открываем прямое окно авторизации Avito
+      const oauthUrl = 'https://avito.ru/oauth?response_type=code&client_id=hF49pA0JvwucazxwgIel&scope=items:info,messenger:read,messenger:write,user:read';
+      window.open(oauthUrl, '_blank', 'width=600,height=700');
       
       // Проверяем подключение через некоторое время
       setTimeout(async () => {
         try {
-          const response = await fetch(`${process.env.AVITO_BACKEND_URL || 'http://144.124.230.138:3005'}/api/avito/listings/public?page=1&limit=1`);
+          const response = await fetch(`${process.env.AVITO_BACKEND_URL || 'https://v467850.hosted-by-vdsina.com/api/docs'}/api/avito/listings/public?page=1&limit=1`);
           if (response.ok) {
             onSuccess();
           }

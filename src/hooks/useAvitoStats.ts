@@ -50,7 +50,7 @@ export function useAvitoStats(): UseAvitoStatsReturn {
       }
 
       const response = await fetch(
-        `${process.env.AVITO_BACKEND_URL || 'http://144.124.230.138:3005'}/api/avito/listings/stats?${params}`,
+        `${process.env.AVITO_BACKEND_URL || 'https://v467850.hosted-by-vdsina.com/api/docs'}/api/avito/listings/stats?${params}`,
         {
           method: 'GET',
           headers: {

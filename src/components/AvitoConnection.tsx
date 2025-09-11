@@ -20,15 +20,9 @@ export function AvitoConnection({ onConnected }: AvitoConnectionProps) {
       setIsConnectingToAvito(true);
       clearError();
       
-      const oauthData = await getOAuthUrl();
-      const oauthUrl = oauthData.url;
+      // Открываем прямое окно авторизации Avito
+      const oauthUrl = 'https://avito.ru/oauth?response_type=code&client_id=hF49pA0JvwucazxwgIel&scope=items:info,messenger:read,messenger:write,user:read';
       
-      // Показываем информацию о демо режиме, если это демо URL
-      if (oauthData.message && oauthData.message.includes('Демо режим')) {
-        toast.info('Демо режим: Avito backend не запущен. Настройте переменные окружения для реальной работы.');
-      }
-      
-      // Открываем окно авторизации Avito
       const popup = window.open(
         oauthUrl,
         'avito-oauth',

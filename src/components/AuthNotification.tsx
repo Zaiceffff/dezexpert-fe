@@ -42,15 +42,9 @@ export function AuthNotification({ onReconnect }: AuthNotificationProps) {
     if (onReconnect) {
       onReconnect();
     } else {
-      // Открываем OAuth URL
-      fetch(`${process.env.AVITO_BACKEND_URL || 'http://144.124.230.138:3005'}/api/avito/oauth/url`)
-        .then(response => response.json())
-        .then(data => {
-          if (data.url) {
-            window.open(data.url, '_blank', 'width=600,height=700');
-          }
-        })
-        .catch(error => console.error('Error getting OAuth URL:', error));
+      // Открываем прямое окно авторизации Avito
+      const oauthUrl = 'https://avito.ru/oauth?response_type=code&client_id=hF49pA0JvwucazxwgIel&scope=items:info,messenger:read,messenger:write,user:read';
+      window.open(oauthUrl, '_blank', 'width=600,height=700');
     }
   };
 

@@ -19,7 +19,7 @@ export function TestDataManager({ onDataCreated }: TestDataManagerProps) {
       setLoading(true);
       setError(null);
 
-      const response = await fetch(`${process.env.AVITO_BACKEND_URL || 'http://144.124.230.138:3005'}/api/avito/listings/seed`, {
+      const response = await fetch(`${process.env.AVITO_BACKEND_URL || 'https://v467850.hosted-by-vdsina.com/api/docs'}/api/avito/listings/seed`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -55,7 +55,7 @@ export function TestDataManager({ onDataCreated }: TestDataManagerProps) {
       setLoading(true);
       setError(null);
 
-      const response = await fetch(`${process.env.AVITO_BACKEND_URL || 'http://144.124.230.138:3005'}/api/avito/listings/fetch-real`, {
+      const response = await fetch(`${process.env.AVITO_BACKEND_URL || 'https://v467850.hosted-by-vdsina.com/api/docs'}/api/avito/listings/fetch-real`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

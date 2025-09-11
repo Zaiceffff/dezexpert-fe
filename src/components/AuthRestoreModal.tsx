@@ -66,13 +66,11 @@ export function AuthRestoreModal({ isOpen, onClose, onSuccess }: AuthRestoreModa
 
   const handleReconnect = async () => {
     try {
-      const response = await fetch(`${process.env.AVITO_BACKEND_URL || 'http://144.124.230.138:3005'}/api/avito/oauth/url`);
-      const data = await response.json();
-      if (data.url) {
-        window.open(data.url, '_blank', 'width=600,height=700');
-      }
+      // Открываем прямое окно авторизации Avito
+      const oauthUrl = 'https://avito.ru/oauth?response_type=code&client_id=hF49pA0JvwucazxwgIel&scope=items:info,messenger:read,messenger:write,user:read';
+      window.open(oauthUrl, '_blank', 'width=600,height=700');
     } catch (error) {
-      console.error('Error getting OAuth URL:', error);
+      console.error('Error opening OAuth URL:', error);
     }
   };
 
