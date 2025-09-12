@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { useAvitoListings } from '@/hooks/useAvitoListings';
@@ -14,6 +14,24 @@ interface AvitoConnectionProps {
 export function AvitoConnection({ onConnected }: AvitoConnectionProps) {
   const { getAvitoToken, getAvitoItems, setAccessToken, setListings, accessToken, error, clearError } = useAvitoListings();
   const [isConnectingToAvito, setIsConnectingToAvito] = useState(false);
+  const [hasCheckedToken, setHasCheckedToken] = useState(false);
+
+  // Проверяем токен при монтировании компонента
+  useEffect(() => {
+    const checkToken = () => {
+      if (!hasCheckedToken && accessToken) {
+        setHasCheckedToken(true);
+        // Если есть токен, можно сразу загрузить объявления
+        if (onConnected) {
+          onConnected();
+        }
+      } else if (!hasCheckedToken && !accessToken) {
+        setHasCheckedToken(true);
+      }
+    };
+
+    checkToken();
+  }, [accessToken, hasCheckedToken, onConnected]);
 
   const handleConnect = async () => {
     try {

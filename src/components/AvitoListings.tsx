@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { useAvitoListings } from '@/hooks/useAvitoListings';
@@ -38,10 +38,26 @@ export function AvitoListings({ onListingUpdate }: AvitoListingsProps) {
 
   const [syncingListingId, setSyncingListingId] = useState<number | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [hasAutoLoaded, setHasAutoLoaded] = useState(false);
+
+  // Автоматическая загрузка объявлений при монтировании компонента
+  useEffect(() => {
+    const autoLoadListings = async () => {
+      // Загружаем только если есть токен, еще не загружали и нет текущих объявлений
+      if (accessToken && !hasAutoLoaded && listings.length === 0 && !loading) {
+        setHasAutoLoaded(true);
+        await getListings(1, 'active');
+      }
+    };
+
+    autoLoadListings();
+  }, [accessToken, hasAutoLoaded, listings.length, loading, getListings]);
 
   const handleSync = async () => {
     if (accessToken) {
+      setHasAutoLoaded(false); // Сбрасываем флаг для повторной загрузки
       await getListings(1, 'active');
+      setHasAutoLoaded(true);
     }
   };
 
